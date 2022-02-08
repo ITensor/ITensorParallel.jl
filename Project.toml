@@ -1,0 +1,13 @@
+name = "ITensorParallel"
+uuid = "0fccfcd2-f061-4985-9740-339d3f86bfce"
+authors = ["Matthew Fishman <mfishman@flatironinstitute.org> and contributors"]
+version = "0.0.1"
+
+[compat]
+julia = "1.6"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
