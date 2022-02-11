@@ -4,6 +4,7 @@ using ITensors
 
 import ITensors: product, position!, noiseterm, lproj, rproj
 
+include("default_in_partition.jl")
 include("opsum_sum.jl")
 include("threaded_projmposum.jl")
 

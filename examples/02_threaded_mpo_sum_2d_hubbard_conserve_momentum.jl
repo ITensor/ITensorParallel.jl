@@ -14,7 +14,7 @@ function main(;
   conserve_ky=true,
   use_splitblocks=true,
   seed=1234,
-  in_partition=ITensorParallel.in_partition,
+  in_partition=ITensorParallel.default_in_partition,
 )
   Random.seed!(seed)
   @show Threads.nthreads()
@@ -91,5 +91,5 @@ ITensors.disable_threaded_blocksparse()
 
 # A function that specifies which partition/processor that an
 # MPO term will be on.
-in_partition = ITensorParallel.in_partition # or: custom_in_partition
+in_partition = ITensorParallel.default_in_partition # or: custom_in_partition
 main(; in_partition=in_partition)
