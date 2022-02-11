@@ -4,5 +4,5 @@ use with a Krylov solver.
 
 Good references are:
 
-https://docs.julialang.org/en/v1/manual/distributed-computing/
-https://docs.julialang.org/en/v1/stdlib/Distributed/
+- https://docs.julialang.org/en/v1/manual/distributed-computing/
+- https://docs.julialang.org/en/v1/stdlib/Distributed/
