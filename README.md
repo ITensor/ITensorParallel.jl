@@ -20,6 +20,8 @@ To run Distributed.jl-based computations on clusters, we will explore using Juli
 
 # Running on clusters
 
+
+## Option 1: `Distributed.jl`
 Here are detailed instructions for running a minimal "hello world" example parallelized with Julia's Distributed.jl standard library, distributed over nodes of a cluster.
 
 1. Start by [downloading the latest version of Julia](https://julialang.org/downloads/) or loading a pre-installed version of Julia, for example with `module load julia`. You can follow more detailed instruction for installing your own version of Julia on a cluster [here](https://itensor.github.io/ITensors.jl/stable/getting_started/Installing.html).
@@ -50,6 +52,7 @@ Precompiling project...
   1 dependency successfully precompiled in 2 seconds (456 already precompiled, 2 skipped during auto due to previous errors)
 ```
 Now the cluster manager (either `ClusterManagers.jl` or `SlurmClusterManager.jl`, whichever you installed) will be available system-wide for you to use and aid you in running your Distributed.jl-based parallelized Julia code across nodes of your cluster.
+
 3. Create a file somewhere within your home directory on the cluster called `hello_world.jl` with the contents:
 ```julia
 #!/usr/bin/env julia
@@ -65,3 +68,42 @@ $ sbatch -N 2 --ntasks-per-node=64 hello_world.jl
 This will execute the code on two nodes using 64 workers per node.
 
 We will add similar instructions on running the same "hello world" example using MPI.jl, and additionally running linear algebra and ITensor operations in parallel with both Distributed.jl and MPI.jl.
+
+
+## Option 2: `MPI.jl`
+
+1. Start by [downloading the latest version of Julia](https://julialang.org/downloads/) or loading a pre-installed version of Julia, for example with `module load julia`. 
+2. Load an MPI installation, e.g. `module load openmpi`.
+3. Install `MPI.jl` (e.g. from the command line: `julia --project -e 'using Pkg; Pkg.add("MPI")'`).
+4. Make sure `MPI.jl` is pointing to the correct `MPI` installation by running the following:
+   ```
+   julia --project -e 'ENV["JULIA_MPI_BINARY"]="system"; using Pkg; Pkg.build("MPI"; verbose=true)'
+   ```
+   Make sure the version of MPI in the output of this command matches the one you wanted to load.
+5. Run a test job:
+   ```julia
+   # 01-hello.jl
+   using MPI
+   MPI.Init()
+
+   comm = MPI.COMM_WORLD
+   println("Hello world, I am $(MPI.Comm_rank(comm)) of $(MPI.Comm_size(comm))")
+   MPI.Barrier(comm)
+   ```
+   using `mpirun -np 4 julia 01-hello.jl`
+6. The correct output should look something like:
+    ```julia
+    Hello world, I am 2 of 4
+    Hello world, I am 0 of 4
+    Hello world, I am 3 of 4
+    Hello world, I am 1 of 4
+    ```
+
+If you see the following warning, go back to step 4 and make sure, `MPI.jl` is pointing to the correct MPI installation:
+
+```
+┌ Warning:     You appear to have run julia under a different `mpiexec` than the one used by MPI.jl.
+│     See the documentation for details.
+└ @ MPI ~/.julia/packages/MPI/08SPr/src/environment.jl:38
+```
+
