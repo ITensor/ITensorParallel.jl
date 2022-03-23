@@ -1,18 +1,20 @@
 using Distributed
 
 # Number of matrices in the sum
-nmats = 5
+nmats = 2
 addprocs(nmats)
 
 @everywhere begin
   using LinearAlgebra
   using KrylovKit
 
+  BLAS.set_num_threads(1)
+
   include(joinpath("src", "DistributedSums.jl"))
   include(joinpath("src", "MatrixMaps.jl"))
 
   # Matrix dimension
-  n = 10
+  n = 100
 
   # Starting vector that we will apply
   # the matrix map to

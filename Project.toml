@@ -4,6 +4,7 @@ authors = ["Matthew Fishman <mfishman@flatironinstitute.org> and contributors"]
 version = "0.0.1"
 
 [deps]
+Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 ITensors = "9136182c-28ba-11e9-034c-db9fb085ebd5"
 
 [compat]
