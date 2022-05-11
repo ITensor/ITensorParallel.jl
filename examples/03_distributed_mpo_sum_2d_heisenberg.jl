@@ -1,4 +1,8 @@
 using Distributed
+nprocs = 2
+addprocs(nprocs)
+@show Threads.nthreads()
+
 @everywhere using ITensors
 @everywhere using ITensorParallel
 
@@ -8,15 +12,9 @@ using Distributed
 # Turn block sparse multithreading on or off
 @everywhere ITensors.disable_threaded_blocksparse()
 
-nprocs = 2
-
-addprocs(nprocs)
-
-@show Threads.nthreads()
-
 distributed_projmpo = true
 
-Nx, Ny = 10, 5
+Nx, Ny = 4, 1
 N = Nx * Ny
 
 sites = siteinds("S=1/2", N; conserve_qns=true)
@@ -43,18 +41,11 @@ end
 
 ℋs = opsum_sum(ℋ, nprocs; in_partition=in_partition)
 
-## H = Vector{MPO}(undef, Threads.nthreads())
-## Threads.@threads for n in 1:Threads.nthreads()
-##   H[Threads.threadid()] = splitblocks(linkinds, MPO(ℋs[n], sites))
-## end
-
-## PH = if threaded_projmpo
-##   ThreadedProjMPOSum(H)
-## else
-##   ProjMPOSum(H)
-## end
-
-PH = DistributedSum(n -> ProjMPO(splitblocks(linkinds, MPO(ℋs[n], sites))), nprocs)
+PH = if distributed_projmpo
+  DistributedSum(n -> ProjMPO(splitblocks(linkinds, MPO(ℋs[n], sites))), nprocs)
+else
+  ProjMPOSum(H)
+end
 
 state = [isodd(n) ? "Up" : "Dn" for n in 1:N]
 psi0 = randomMPS(sites, state, 10)

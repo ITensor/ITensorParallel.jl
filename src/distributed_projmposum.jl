@@ -11,6 +11,9 @@ nsite(P::DistributedSum) = nsite(fetch(P.pm[1]))
 
 Base.length(P::DistributedSum) = length(fetch(P.pm[1]))
 
+Base.getindex(P::DistributedSum, n::Int) = getindex(P.pm, n)
+Base.setindex!(P::DistributedSum, x, n::Int) = setindex!(P.pm, x, n)
+
 function product(P::DistributedSum, v::ITensor)::ITensor
   return @distributed (+) for M in P.pm
     fetch(M)(v)
@@ -19,8 +22,8 @@ end
 
 function Base.eltype(P::DistributedSum)
   elT = eltype(P.pm[1])
-  for n=2:length(P.pm)
-    elT = promote_type(elT,eltype(P.pm[n]))
+  for n in 2:length(P.pm)
+    elT = promote_type(elT, eltype(P.pm[n]))
   end
   return elT
 end
@@ -30,17 +33,21 @@ end
 Base.size(P::DistributedSum) = size(P.pm[1])
 
 function position!(P::DistributedSum, psi::MPS, pos::Int)
-  return @distributed for M in P.pm
-    position!(fetch(M), psi, pos)
+  @distributed for n in 1:length(P.pm)
+    M_fetched = fetch(P[n])
+    position!(M_fetched, psi, pos)
+    P[n] = @spawnat(workers()[n], M_fetched)
   end
+  return P
 end
 
-function noiseterm(P::DistributedSum,
-                   phi::ITensor,
-                   dir::String)
-  nts = fill(ITensor(), Threads.nthreads())
-  Threads.@threads for M in P.pm
-    nts[Threads.threadid()] += noiseterm(M, phi, dir)
-  end
-  return sum(nts)
-end
+## XXX: Implement this.
+## function noiseterm(P::DistributedSum,
+##                    phi::ITensor,
+##                    dir::String)
+##   nts = fill(ITensor(), Threads.nthreads())
+##   Threads.@threads for M in P.pm
+##     nts[Threads.threadid()] += noiseterm(M, phi, dir)
+##   end
+##   return sum(nts)
+## end
