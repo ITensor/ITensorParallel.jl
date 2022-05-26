@@ -35,10 +35,6 @@ function _Allreduce(sendbuf::ITensor, op, comm)
 end
 
 function product(P::MPISum, v::ITensor)::ITensor
-  # Error: Type must be isbitstype
-  # return _Allreduce(P.data(v), +, P.comm)
-  Pv = similar(v)
-  MPI.Allreduce!(P.data(v), Pv, +, P.comm)
   return _Allreduce(P.data(v), +, P.comm)
 end
 
