@@ -17,12 +17,29 @@ nsite(P::MPISum) = nsite(P.data)
 
 Base.length(P::MPISum) = length(P.data)
 
-function product(P::MPISum, v::ITensor)::ITensor
-  # Error: Type must be isbitstype
-  # return MPI.Allreduce(P.data(v), +, P.comm)
-  Pv = similar(v)
+# [(1, 1), (1, 2), (2, 1)] => length=3,  [2, 1, 1, 1, 2, 2, 1]
+# [(1, 1), (1, 2)] => length=2, [2, 1, 1, 1, 2]
+#   -> [(1, 1), (1, 2), (0, 0)]
+function _Allreduce(sendbuf::ITensor, op, comm)
+  error("Not implemented")
+  Pv = P.data(v)
+  blocks = nzblocks(Pv)
+  # Gather blocks from other 
+  # XXX: Implement this
+  unioned_blocks = union(blocks_n)
+  Pv_expanded = ITensor(unioned_blocks, inds(Pv))
+  add!(Pv_expanded, Pv)
+  Pv_output = similar(Pv)
   MPI.Allreduce!(P.data(v), Pv, +, P.comm)
   return Pv
+end
+
+function product(P::MPISum, v::ITensor)::ITensor
+  # Error: Type must be isbitstype
+  # return _Allreduce(P.data(v), +, P.comm)
+  Pv = similar(v)
+  MPI.Allreduce!(P.data(v), Pv, +, P.comm)
+  return _Allreduce(P.data(v), +, P.comm)
 end
 
 function Base.eltype(P::MPISum)
