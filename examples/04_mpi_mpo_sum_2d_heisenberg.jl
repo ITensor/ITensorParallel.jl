@@ -17,7 +17,7 @@ mpi_projmpo = true
 Nx, Ny = 4, 1
 N = Nx * Ny
 
-sites = siteinds("S=1/2", N; conserve_qns=false)
+sites = siteinds("S=1/2", N; conserve_qns=true)
 
 lattice = square_lattice(Nx, Ny; yperiodic=false)
 
