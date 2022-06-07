@@ -18,34 +18,40 @@ nsite(P::MPISum) = nsite(P.data)
 Base.length(P::MPISum) = length(P.data)
 
 function _Allreduce(sendbuf::ITensor, op, comm)
-  recvbuf_filled = if hasqns(sendbuf)
-    # Similar to:
-    #
-    # ITensor(eltype(sendbuf), flux(sendbuf), inds(sendbuf))
-    #
-    # But more efficient.
-    nprocs = MPI.Comm_size(comm)
-    N = order(sendbuf)
-    max_nblocks = maximum(MPI.Allgather(nnzblocks(sendbuf), comm))
-    blocks_sendbuf = fill(0, max_nblocks, N)
-    nzblocks_matrix = Matrix{Int}(reduce(hcat, collect.(nzblocks(sendbuf)))')
-    blocks_sendbuf[1:size(nzblocks_matrix, 1), :] = nzblocks_matrix
-    allblocks = MPI.Allgather(blocks_sendbuf, comm)
-    allblocks_tensor = reshape(allblocks, max_nblocks, N, nprocs)
-    allblocks_vector = [allblocks_tensor[:, :, i] for i in 1:nprocs]
-    allblocks_vector_tuple = [[Tuple(allblocks_vector[n][i, :]) for i in 1:max_nblocks] for n in 1:nprocs]
-    blocks = Block.(filter(≠(ntuple(Returns(0), N)), union(allblocks_vector_tuple...)))
-    itensor(BlockSparseTensor(eltype(sendbuf), blocks, inds(sendbuf)))
-  else
-    ITensor(eltype(sendbuf), 0.0, inds(sendbuf))
-  end
-  sendbuf_filled = copy(recvbuf_filled)
-  sendbuf_filled .= sendbuf
-  MPI.Allreduce!(sendbuf_filled, recvbuf_filled, +, comm)
-  return recvbuf_filled
+  return _Allreduce(NDTensors.storagetype(tensor(sendbuf)), sendbuf, op, comm)
 end
 
-function product(P::MPISum, v::ITensor)::ITensor
+function _Allreduce(::Type{<:BlockSparse}, sendbuf::ITensor, op, comm)
+  # Similar to:
+  #
+  # recvbuf = ITensor(eltype(sendbuf), flux(sendbuf), inds(sendbuf))
+  #
+  # But more efficient.
+  nprocs = MPI.Comm_size(comm)
+  N = order(sendbuf)
+  max_nblocks = maximum(MPI.Allgather(nnzblocks(sendbuf), comm))
+  blocks_sendbuf = fill(0, max_nblocks, N)
+  nzblocks_matrix = Matrix{Int}(reduce(hcat, collect.(nzblocks(sendbuf)))')
+  blocks_sendbuf[1:size(nzblocks_matrix, 1), :] = nzblocks_matrix
+  allblocks = MPI.Allgather(blocks_sendbuf, comm)
+  allblocks_tensor = reshape(allblocks, max_nblocks, N, nprocs)
+  allblocks_vector = [allblocks_tensor[:, :, i] for i in 1:nprocs]
+  allblocks_vector_tuple = [[Tuple(allblocks_vector[n][i, :]) for i in 1:max_nblocks] for n in 1:nprocs]
+  blocks = Block.(filter(≠(ntuple(Returns(0), N)), union(allblocks_vector_tuple...)))
+  recvbuf = itensor(BlockSparseTensor(eltype(sendbuf), blocks, inds(sendbuf)))
+  sendbuf_filled = copy(recvbuf)
+  sendbuf_filled .= sendbuf
+  MPI.Allreduce!(sendbuf_filled, recvbuf, +, comm)
+  return recvbuf
+end
+
+function _Allreduce(::Type{<:Dense}, sendbuf::ITensor, op, comm)
+  recvbuf = similar(sendbuf)
+  MPI.Allreduce!(sendbuf, recvbuf, op, comm)
+  return recvbuf
+end
+
+function product(P::MPISum, v::ITensor)
   return _Allreduce(P.data(v), +, P.comm)
 end
 
