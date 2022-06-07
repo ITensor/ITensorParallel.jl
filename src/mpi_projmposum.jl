@@ -17,21 +17,32 @@ nsite(P::MPISum) = nsite(P.data)
 
 Base.length(P::MPISum) = length(P.data)
 
-# [(1, 1), (1, 2), (2, 1)] => length=3,  [2, 1, 1, 1, 2, 2, 1]
-# [(1, 1), (1, 2)] => length=2, [2, 1, 1, 1, 2]
-#   -> [(1, 1), (1, 2), (0, 0)]
 function _Allreduce(sendbuf::ITensor, op, comm)
-  error("Not implemented")
-  Pv = P.data(v)
-  blocks = nzblocks(Pv)
-  # Gather blocks from other 
-  # XXX: Implement this
-  unioned_blocks = union(blocks_n)
-  Pv_expanded = ITensor(unioned_blocks, inds(Pv))
-  add!(Pv_expanded, Pv)
-  Pv_output = similar(Pv)
-  MPI.Allreduce!(P.data(v), Pv, +, P.comm)
-  return Pv
+  recvbuf_filled = if hasqns(sendbuf)
+    # Similar to:
+    #
+    # ITensor(eltype(sendbuf), flux(sendbuf), inds(sendbuf))
+    #
+    # But more efficient.
+    nprocs = MPI.Comm_size(comm)
+    N = order(sendbuf)
+    max_nblocks = maximum(MPI.Allgather(nnzblocks(sendbuf), comm))
+    blocks_sendbuf = fill(0, max_nblocks, N)
+    nzblocks_matrix = Matrix{Int}(reduce(hcat, collect.(nzblocks(sendbuf)))')
+    blocks_sendbuf[1:size(nzblocks_matrix, 1), :] = nzblocks_matrix
+    allblocks = MPI.Allgather(blocks_sendbuf, comm)
+    allblocks_tensor = reshape(allblocks, max_nblocks, N, nprocs)
+    allblocks_vector = [allblocks_tensor[:, :, i] for i in 1:nprocs]
+    allblocks_vector_tuple = [[Tuple(allblocks_vector[n][i, :]) for i in 1:max_nblocks] for n in 1:nprocs]
+    blocks = Block.(filter(≠(ntuple(Returns(0), N)), union(allblocks_vector_tuple...)))
+    itensor(BlockSparseTensor(eltype(sendbuf), blocks, inds(sendbuf)))
+  else
+    ITensor(eltype(sendbuf), 0.0, inds(sendbuf))
+  end
+  sendbuf_filled = copy(recvbuf_filled)
+  sendbuf_filled .= sendbuf
+  MPI.Allreduce!(sendbuf_filled, recvbuf_filled, +, comm)
+  return recvbuf_filled
 end
 
 function product(P::MPISum, v::ITensor)::ITensor

@@ -3,6 +3,7 @@ module ITensorParallel
 using Distributed
 using MPI
 using ITensors
+using ITensors.NDTensors
 
 import ITensors: product, position!, noiseterm, lproj, rproj
 
