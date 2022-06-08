@@ -14,7 +14,7 @@ Random.seed!(seed)
 
 mpi_projmpo = true
 
-Nx, Ny = 4, 1
+Nx, Ny = 8, 1
 N = Nx * Ny
 
 sites = siteinds("S=1/2", N; conserve_qns=true)
@@ -22,15 +22,15 @@ sites = siteinds("S=1/2", N; conserve_qns=true)
 lattice = square_lattice(Nx, Ny; yperiodic=false)
 
 function heisenberg_hamiltonian(lattice)
-  ℋ = OpSum()
+  opsum = OpSum()
   for b in lattice
-    ℋ += 0.5, "S+", b.s1, "S-", b.s2
-    ℋ += 0.5, "S-", b.s1, "S+", b.s2
-    ℋ += "Sz", b.s1, "Sz", b.s2
+    opsum += 0.5, "S+", b.s1, "S-", b.s2
+    opsum += 0.5, "S-", b.s1, "S+", b.s2
+    opsum += "Sz", b.s1, "Sz", b.s2
   end
-  return ℋ
+  return opsum
 end
-ℋ = heisenberg_hamiltonian(lattice)
+opsum = heisenberg_hamiltonian(lattice)
 
 # Define how the Hamiltonian will be partitioned
 # into a sum of sub-Hamiltonians.
@@ -39,12 +39,16 @@ function in_partition(sites::Tuple{Int,Int}, p, nparts)
   return p == mod1(i, nparts)
 end
 
+# Number of partitions
+nparts = 4
+
 nprocs = MPI.Comm_size(MPI.COMM_WORLD)
-ℋs = partition(ℋ, nprocs; in_partition=in_partition)
+nparts_per_proc = nparts ÷ nprocs
+opsums = collect(Iterators.partition(partition(opsum, nparts; in_partition=in_partition), nparts_per_proc))
 
 PH = if mpi_projmpo
   n = MPI.Comm_rank(MPI.COMM_WORLD) + 1
-  MPISum(ProjMPO(MPO(ℋs[n], sites)))
+  MPISum(ThreadedProjMPOSum([MPO(opsum, sites) for opsum in opsums[n]]))
 else
   ProjMPOSum(H)
 end

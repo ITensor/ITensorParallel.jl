@@ -32,7 +32,7 @@ function main(;
   sites = siteinds("ElecK", N; conserve_qns=true, conserve_ky=conserve_ky, modulus_ky=Ny)
 
   ℋ = hubbard(; Nx=Nx, Ny=Ny, t=t, U=U, ky=true)
-  ℋs = opsum_sum(ℋ, Threads.nthreads(); in_partition=in_partition)
+  ℋs = partition(ℋ, Threads.nthreads(); in_partition=in_partition)
 
   H = Vector{MPO}(undef, Threads.nthreads())
   Threads.@threads for n in 1:length(ℋs)

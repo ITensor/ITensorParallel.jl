@@ -36,7 +36,7 @@ function in_partition(sites::Tuple{Int,Int}, p, nparts)
   return p == mod1(i, nparts)
 end
 
-ℋs = opsum_sum(ℋ, Threads.nthreads(); in_partition=in_partition)
+ℋs = partition(ℋ, Threads.nthreads(); in_partition=in_partition)
 
 H = Vector{MPO}(undef, Threads.nthreads())
 Threads.@threads for n in 1:Threads.nthreads()
