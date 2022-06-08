@@ -20,8 +20,8 @@ end
 
 function Base.eltype(P::ThreadedProjMPOSum)
   elT = eltype(P.pm[1])
-  for n=2:length(P.pm)
-    elT = promote_type(elT,eltype(P.pm[n]))
+  for n in 2:length(P.pm)
+    elT = promote_type(elT, eltype(P.pm[n]))
   end
   return elT
 end
@@ -37,9 +37,7 @@ function position!(P::ThreadedProjMPOSum, psi::MPS, pos::Int)
   return P
 end
 
-function noiseterm(P::ThreadedProjMPOSum,
-                   phi::ITensor,
-                   dir::String)
+function noiseterm(P::ThreadedProjMPOSum, phi::ITensor, dir::String)
   nts = fill(ITensor(), Threads.nthreads())
   Threads.@threads for M in P.pm
     nts[Threads.threadid()] += noiseterm(M, phi, dir)

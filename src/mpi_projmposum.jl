@@ -36,7 +36,9 @@ function _Allreduce(::Type{<:BlockSparse}, sendbuf::ITensor, op, comm)
   allblocks = MPI.Allgather(blocks_sendbuf, comm)
   allblocks_tensor = reshape(allblocks, max_nblocks, N, nprocs)
   allblocks_vector = [allblocks_tensor[:, :, i] for i in 1:nprocs]
-  allblocks_vector_tuple = [[Tuple(allblocks_vector[n][i, :]) for i in 1:max_nblocks] for n in 1:nprocs]
+  allblocks_vector_tuple = [
+    [Tuple(allblocks_vector[n][i, :]) for i in 1:max_nblocks] for n in 1:nprocs
+  ]
   blocks = Block.(filter(≠(ntuple(Returns(0), N)), union(allblocks_vector_tuple...)))
   recvbuf = itensor(BlockSparseTensor(eltype(sendbuf), blocks, inds(sendbuf)))
   sendbuf_filled = copy(recvbuf)

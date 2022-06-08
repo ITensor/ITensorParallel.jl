@@ -44,7 +44,9 @@ nparts = 4
 
 nprocs = MPI.Comm_size(MPI.COMM_WORLD)
 nparts_per_proc = nparts ÷ nprocs
-opsums = collect(Iterators.partition(partition(opsum, nparts; in_partition=in_partition), nparts_per_proc))
+opsums = collect(
+  Iterators.partition(partition(opsum, nparts; in_partition=in_partition), nparts_per_proc)
+)
 
 PH = if mpi_projmpo
   n = MPI.Comm_rank(MPI.COMM_WORLD) + 1

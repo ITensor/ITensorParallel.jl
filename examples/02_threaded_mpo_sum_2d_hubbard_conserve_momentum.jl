@@ -70,7 +70,9 @@ function main(;
 
   psi0 = randomMPS(sites, state, 10)
 
-  energy, psi = @time dmrg(ThreadedProjMPOSum(H), psi0, sweeps; svd_alg="divide_and_conquer")
+  energy, psi = @time dmrg(
+    ThreadedProjMPOSum(H), psi0, sweeps; svd_alg="divide_and_conquer"
+  )
   @show Nx, Ny
   @show t, U
   @show flux(psi)
