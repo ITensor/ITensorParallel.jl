@@ -39,7 +39,7 @@ function in_partition(sites::Tuple{Int,Int}, p, nparts)
   return p == mod1(i, nparts)
 end
 
-ℋs = opsum_sum(ℋ, nprocs; in_partition=in_partition)
+ℋs = partition(ℋ, nprocs; in_partition=in_partition)
 
 PH = if distributed_projmpo
   DistributedSum(n -> ProjMPO(splitblocks(linkinds, MPO(ℋs[n], sites))), nprocs)

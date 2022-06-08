@@ -7,12 +7,11 @@ using ITensors.NDTensors
 
 import ITensors: product, position!, noiseterm, lproj, rproj
 
-include("default_in_partition.jl")
-include("opsum_sum.jl")
+include("partition.jl")
 include("threaded_projmposum.jl")
 include("distributed_projmposum.jl")
 include("mpi_projmposum.jl")
 
-export ThreadedProjMPOSum, opsum_sum, DistributedSum, MPISum
+export ThreadedProjMPOSum, partition, DistributedSum, MPISum
 
 end
