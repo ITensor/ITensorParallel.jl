@@ -34,7 +34,7 @@ function partition(os::OpSum, nparts::Integer; in_partition=default_in_partition
     for n in 1:length(os)
       sites = _sites(os[n])
       if in_partition(sites, p, nparts)
-        oss[p] += os[n]
+        add!(oss[p], os[n])
       end
     end
   end
