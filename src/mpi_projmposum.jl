@@ -70,8 +70,6 @@ function position!(P::MPISum, psi::MPS, pos::Int)
   return P
 end
 
-function noiseterm(P::MPISum,
-                   phi::ITensor,
-                   dir::String)
+function noiseterm(P::MPISum, phi::ITensor, dir::String)
   return _Allreduce(noiseterm(P.data, phi, dir), +, P.comm)
 end
