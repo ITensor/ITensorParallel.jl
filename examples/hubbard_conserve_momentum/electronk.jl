@@ -62,4 +62,6 @@ end
 
 state(statename::StateName, ::SiteType"ElectronK") = state(statename, SiteType("Electron"))
 op(opname::OpName, ::SiteType"ElectronK") = op(opname, SiteType("Electron"))
-has_fermion_string(opname::OpName, ::SiteType"ElectronK") = has_fermion_string(opname, SiteType("Electron"))
+function has_fermion_string(opname::OpName, ::SiteType"ElectronK")
+  return has_fermion_string(opname, SiteType("Electron"))
+end
