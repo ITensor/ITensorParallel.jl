@@ -16,10 +16,10 @@ function hubbard_ky_hopping(; Nx::Int, Ny::Int, t=1.0)
     for ky in 0:(Ny - 1)
       i = x * Ny + ky + 1
       j = (x + 1) * Ny + ky + 1
-      opsum -= t, "c†↑", i, "c↑", j
-      opsum -= t, "c†↑", j, "c↑", i
-      opsum -= t, "c†↓", i, "c↓", j
-      opsum -= t, "c†↓", j, "c↓", i
+      opsum += -t, "c†↑", i, "c↑", j
+      opsum += -t, "c†↑", j, "c↑", i
+      opsum += -t, "c†↓", i, "c↓", j
+      opsum += -t, "c†↓", j, "c↓", i
     end
   end
   return opsum
@@ -59,8 +59,10 @@ function hubbard_ky_interactions(; Nx::Int, Ny::Int, U)
           opsum += (U / Ny), "Cdagdn", s1, "Cdagup", s2, "Cup", s3, "Cdn", s4
         end
       end
+      push!(opsums, opsum)
     end
   end
+  return opsums
 end
 
 function hubbard_ky(; Nx::Int, Ny::Int, t=1.0, U)

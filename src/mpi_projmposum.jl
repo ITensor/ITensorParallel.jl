@@ -3,6 +3,7 @@ function MPI.RBuffer(senddata::ITensor, recvdata::ITensor)
   @assert inds(senddata) == inds(recvdata)
   _senddata = ITensors.data(senddata)
   _recvdata = ITensors.data(recvdata)
+  @assert length(_senddata) == length(_recvdata)
   return MPI.RBuffer(_senddata, _recvdata)
 end
 

@@ -1,6 +1,7 @@
 using ITensors
 using ITensorParallel
 using MPI
+using Random
 
 MPI.Init()
 
@@ -16,7 +17,8 @@ Nx = 4
 Ny = 2
 N = Nx * Ny
 
-sites = siteinds("ElectronK", N; conserve_qns=true)
+@show U, Nx, Ny
+sites = siteinds("ElectronK", N; conserve_qns=true, conserve_ky=true, modulus_ky=Ny)
 
 opsums = hubbard_ky(; Nx, Ny, U)
 
@@ -28,7 +30,12 @@ nprocs = MPI.Comm_size(MPI.COMM_WORLD)
 Hss = collect(Iterators.partition(Hs, nprocs))
 
 n = MPI.Comm_rank(MPI.COMM_WORLD) + 1
-PH = MPISum(ProjMPOSum(copy(Hss[n])))
+Hn = copy(Hss[n])
+
+ITensors.checkflux.(Hn)
+@show flux.(Hn)
+
+PH = MPISum(ProjMPOSum(Hn))
 
 init_state = Vector{String}(undef, N)
 for i in 1:N
@@ -49,8 +56,12 @@ for i in 1:N
   end
 end
 
-psi0 = randomMPS(sites, init_state; linkdims=10)
-dmrg_kwargs = (nsweeps=5, maxdim=[10, 20, 50], cutoff=1e-5)
+Random.seed!(1234)
+
+psi0 = randomMPS(sites, init_state; linkdims=20)
+ITensors.checkflux(psi0)
+@show flux(psi0)
+dmrg_kwargs = (nsweeps=20, maxdim=[10, 20, 50, 100, 200], cutoff=1e-5, noise=1e-4)
 energy, psi = @time dmrg(PH, psi0; dmrg_kwargs...)
 
 MPI.Finalize()
