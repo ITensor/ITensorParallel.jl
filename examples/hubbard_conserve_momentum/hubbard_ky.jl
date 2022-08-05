@@ -1,6 +1,8 @@
 using ITensors
 
 function hubbard_ky_hopping(; Nx::Int, Ny::Int, t=1.0)
+  opsums = OpSum[]
+
   opsum = OpSum()
   for x in 0:(Nx - 1)
     for ky in 0:(Ny - 1)
@@ -12,6 +14,9 @@ function hubbard_ky_hopping(; Nx::Int, Ny::Int, t=1.0)
       end
     end
   end
+  push!(opsums, opsum)
+
+  opsum = OpSum()
   for x in 0:(Nx - 2)
     for ky in 0:(Ny - 1)
       i = x * Ny + ky + 1
@@ -22,7 +27,9 @@ function hubbard_ky_hopping(; Nx::Int, Ny::Int, t=1.0)
       opsum += -t, "c†↓", j, "c↓", i
     end
   end
-  return opsum
+  push!(opsums, opsum)
+
+  return opsums
 end
 
 # function hubbard_ky_interactions(; Nx::Int, Ny::Int, U)
