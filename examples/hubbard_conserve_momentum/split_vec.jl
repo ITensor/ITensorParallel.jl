@@ -1,3 +1,8 @@
+# References:
+# https://github.com/JuliaML/MLUtils.jl: `MLUtils.chunk`
+# https://discourse.julialang.org/t/split-vector-into-n-potentially-unequal-length-subvectors/73548
+# https://github.com/m3g/ChunkSplitters.jl
+# https://github.com/JuliaFolds/SplittablesBase.jl
 function split_vec(x::Vector, npartitions::Int)
   partition_lengths = zeros(Int, npartitions)
   which_part = 1
