@@ -10,12 +10,8 @@ nsite(P::ThreadedProjMPOSum) = nsite(P.pm[1])
 
 Base.length(P::ThreadedProjMPOSum) = length(P.pm[1])
 
-function product(P::ThreadedProjMPOSum, v::ITensor)::ITensor
-  Pvs = fill(ITensor(), Threads.nthreads())
-  Threads.@threads for M in P.pm
-    Pvs[Threads.threadid()] += product(M, v)
-  end
-  return sum(Pvs)
+function product(P::ThreadedProjMPOSum, v::ITensor)
+  return Folds.sum(M -> product(M, v), P.pm, ThreadedEx())
 end
 
 function Base.eltype(P::ThreadedProjMPOSum)
@@ -31,16 +27,10 @@ end
 Base.size(P::ThreadedProjMPOSum) = size(P.pm[1])
 
 function position!(P::ThreadedProjMPOSum, psi::MPS, pos::Int)
-  Threads.@threads for M in P.pm
-    position!(M, psi, pos)
-  end
+  Folds.map(M -> position!(M, psi, pos), P.pm, ThreadedEx())
   return P
 end
 
 function noiseterm(P::ThreadedProjMPOSum, phi::ITensor, dir::String)
-  nts = fill(ITensor(), Threads.nthreads())
-  Threads.@threads for M in P.pm
-    nts[Threads.threadid()] += noiseterm(M, phi, dir)
-  end
-  return sum(nts)
+  return Folds.sum(M -> noiseterm(M, phi, dir), P.pm, ThreadedEx())
 end

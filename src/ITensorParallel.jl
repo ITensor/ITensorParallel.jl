@@ -1,6 +1,7 @@
 module ITensorParallel
 
 using Distributed
+using Folds
 using MPI
 using ITensors
 using ITensors.NDTensors
