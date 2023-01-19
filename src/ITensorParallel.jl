@@ -5,7 +5,7 @@ using MPI
 using ITensors
 using ITensors.NDTensors
 
-import ITensors: product, position!, noiseterm, lproj, rproj
+import ITensors: product, position!, noiseterm, lproj, rproj,nsite,replaceind!,linkind
 
 include("partition.jl")
 include("threaded_projmposum.jl")
