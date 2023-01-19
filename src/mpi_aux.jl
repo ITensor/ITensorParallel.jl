@@ -1,28 +1,5 @@
-
-"""
-bcast(obj, comm::Comm; root::Integer=Cint(0)) =
-    bcast(obj, root, comm)
-function bcast(obj, root::Integer, comm::Comm)
-    isroot = Comm_rank(comm) == root
-    count = Ref{Cint}()
-    if isroot
-        buf = MPI.serialize(obj)
-        count[] = length(buf)
-    end
-    Bcast!(count, root, comm)
-    if !isroot
-        buf = Array{UInt8}(undef, count[])
-    end
-    Bcast!(buf, root, comm)
-    if !isroot
-        obj = MPI.deserialize(buf)
-    end
-    return obj
-end
-"""
-
-_gather(obj, comm::MPI.Comm, root::Integer=Cint(0)) = _gather(obj, root, comm)
-function _gather(obj, root::Integer, comm::MPI.Comm)
+gather(obj, comm::MPI.Comm, root::Integer=Cint(0)) = gather(obj, root, comm)
+function gather(obj, root::Integer, comm::MPI.Comm)
   isroot = MPI.Comm_rank(comm) == root
   count = Ref{Cint}()
   buf = MPI.serialize(obj)
@@ -46,4 +23,16 @@ function _gather(obj, root::Integer, comm::MPI.Comm)
     objs = nothing
   end
   return objs
+end
+
+function allreduce(sendbuf, op, comm::MPI.Comm)
+  ##maybe better to implement as allgather with local reduce, but higher communication cost associated
+  bufs = gather(sendbuf, 0, comm)
+  rank = MPI.Comm_rank(comm)
+  if rank == 0
+    res = reduce(op, bufs)
+  else
+    res = nothing
+  end
+  return MPI.bcast(res, 0, comm)
 end

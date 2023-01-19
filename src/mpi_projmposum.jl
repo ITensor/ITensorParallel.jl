@@ -18,24 +18,8 @@ nsite(P::MPISum) = nsite(P.data)
 
 Base.length(P::MPISum) = length(P.data)
 
-function _allreduce(sendbuf, op, comm::MPI.Comm)
-  ##maybe better to implement as allgather with local reduce, but higher communication cost associated
-  bufs = _gather(sendbuf, 0, comm)
-  rank = MPI.Comm_rank(comm)
-  if rank == 0
-    if op == +
-      res = sum(bufs)
-    else
-      res = reduce(op, bufs)
-    end
-  else
-    res = nothing
-  end
-  return MPI.bcast(res, 0, comm)
-end
-
 function product(P::MPISum, v::ITensor)
-  return _allreduce(P.data(v), +, P.comm)
+  return allreduce(P.data(v), +, P.comm)
 end
 
 function Base.eltype(P::MPISum)
@@ -127,5 +111,5 @@ end
 function noiseterm(P::MPISum, phi::ITensor, dir::String)
   ##ToDo: I think the logic here is wrong.
   ##The noiseterm should be calculated on the reduced P*v and then broadcasted?
-  return _allreduce(noiseterm(P.data, phi, dir), +, P.comm)
+  return allreduce(noiseterm(P.data, phi, dir), +, P.comm)
 end
