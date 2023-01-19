@@ -18,24 +18,24 @@ nsite(P::MPISum) = nsite(P.data)
 
 Base.length(P::MPISum) = length(P.data)
 
-function _allreduce(sendbuf,op,comm::MPI.Comm)
+function _allreduce(sendbuf, op, comm::MPI.Comm)
   ##maybe better to implement as allgather with local reduce, but higher communication cost associated
-  bufs=_gather(sendbuf,0,comm)
-  rank=MPI.Comm_rank(comm)
-  if rank==0
-    if op==+
-      res=sum(bufs)
+  bufs = _gather(sendbuf, 0, comm)
+  rank = MPI.Comm_rank(comm)
+  if rank == 0
+    if op == +
+      res = sum(bufs)
     else
-      res=reduce(op,bufs)
+      res = reduce(op, bufs)
     end
   else
-    res=nothing
+    res = nothing
   end
-  return MPI.bcast(res,0,comm)
+  return MPI.bcast(res, 0, comm)
 end
 
 function product(P::MPISum, v::ITensor)
-  return _allreduce(P.data(v),+,P.comm)
+  return _allreduce(P.data(v), +, P.comm)
 end
 
 function Base.eltype(P::MPISum)
@@ -46,8 +46,7 @@ end
 
 Base.size(P::MPISum) = size(P.data)
 
-
-function position!(P::MPISum{T}, psi::MPS, pos::Int)  where T<:ITensors.AbstractProjMPO
+function position!(P::MPISum{T}, psi::MPS, pos::Int) where {T<:ITensors.AbstractProjMPO}
   makeL!(P, psi, pos - 1)
   makeR!(P, psi, pos + nsite(P))
   return P
@@ -63,12 +62,10 @@ function makeR!(P::MPISum, psi::MPS, k::Int)
   return P
 end
 
-
-
 function _makeL!(_P::MPISum, psi::MPS, k::Int)::Union{ITensor,Nothing}
   # Save the last `L` that is made to help with caching
   # for DiskProjMPO
-  P=_P.data
+  P = _P.data
   ll = P.lpos
   if ll ≥ k
     # Special case when nothing has to be done.
@@ -82,11 +79,11 @@ function _makeL!(_P::MPISum, psi::MPS, k::Int)::Union{ITensor,Nothing}
   L = lproj(P)
   while ll < k
     # sync the linkindex across processes
-    mylink=linkind(psi,ll+1)
-    otherlink=MPI.bcast(mylink,0,_P.comm)
-    replaceind!(psi[ll+1],mylink,otherlink)
-    replaceind!(psi[ll+2],mylink,otherlink)
-    
+    mylink = linkind(psi, ll + 1)
+    otherlink = MPI.bcast(mylink, 0, _P.comm)
+    replaceind!(psi[ll + 1], mylink, otherlink)
+    replaceind!(psi[ll + 2], mylink, otherlink)
+
     L = L * psi[ll + 1] * P.H[ll + 1] * dag(prime(psi[ll + 1]))
     P.LR[ll + 1] = L
     ll += 1
@@ -99,7 +96,7 @@ end
 function _makeR!(_P::MPISum{ProjMPO}, psi::MPS, k::Int)::Union{ITensor,Nothing}
   # Save the last `R` that is made to help with caching
   # for DiskProjMPO
-  P=_P.data
+  P = _P.data
   rl = P.rpos
   if rl ≤ k
     # Special case when nothing has to be done.
@@ -114,11 +111,11 @@ function _makeR!(_P::MPISum{ProjMPO}, psi::MPS, k::Int)::Union{ITensor,Nothing}
   R = rproj(P)
   while rl > k
     #sync linkindex across processes
-    mylink=linkind(psi,rl-2)
-    otherlink=MPI.bcast(mylink,0,_P.comm)
-    replaceind!(psi[rl-2],mylink,otherlink)
-    replaceind!(psi[rl-1],mylink,otherlink)
-    
+    mylink = linkind(psi, rl - 2)
+    otherlink = MPI.bcast(mylink, 0, _P.comm)
+    replaceind!(psi[rl - 2], mylink, otherlink)
+    replaceind!(psi[rl - 1], mylink, otherlink)
+
     R = R * psi[rl - 1] * P.H[rl - 1] * dag(prime(psi[rl - 1]))
     P.LR[rl - 1] = R
     rl -= 1
@@ -126,8 +123,6 @@ function _makeR!(_P::MPISum{ProjMPO}, psi::MPS, k::Int)::Union{ITensor,Nothing}
   P.rpos = k
   return R
 end
-
-
 
 function noiseterm(P::MPISum, phi::ITensor, dir::String)
   ##ToDo: I think the logic here is wrong.
