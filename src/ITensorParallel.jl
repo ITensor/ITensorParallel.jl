@@ -11,15 +11,14 @@ import ITensors: product, position!, noiseterm, lproj, rproj, nsite, replaceind!
 
 include("mpi_extensions.jl")
 include("partition.jl")
-include("threadedsum.jl")
+include("parallelsum.jl")
 include("mpisum.jl")
 
-# BROKEN
-# include("distributedsum.jl")
-
-export partition,
+export DistributedSum,
+  SequentialSum,
   ThreadedSum,
   ThreadedProjMPOSum,
-  MPISum
+  MPISum,
+  partition
 
 end

@@ -1,10 +1,27 @@
-using ITensors
-using ITensorParallel
+using Distributed
+
+rmprocs(setdiff(procs(), 1))
+addprocs(4)
+@show nprocs()
+
+@everywhere using ITensors
+@everywhere using ITensorParallel
 using Random
 
 include(joinpath(pkgdir(ITensors), "examples", "src", "electronk.jl"))
 include(joinpath(pkgdir(ITensors), "examples", "src", "hubbard.jl"))
 
+ITensors.BLAS.set_num_threads(1)
+ITensors.Strided.disable_threads()
+
+"""
+Run with:
+```julia
+main(; Sum=ThreadedSum, threaded_blocksparse=true);
+main(; Sum=DistributedSum, threaded_blocksparse=true);
+main(; Sum=SequentialSum, threaded_blocksparse=true);
+```
+"""
 function main(;
   Nx::Int=6,
   Ny::Int=3,
@@ -12,22 +29,30 @@ function main(;
   t::Float64=1.0,
   maxdim::Int=3000,
   conserve_ky=true,
-  use_splitblocks=true,
   seed=1234,
+  Sum,
+  threaded_blocksparse=false,
   in_partition=ITensorParallel.default_in_partition,
 )
   Random.seed!(seed)
   @show Threads.nthreads()
+
+  if threaded_blocksparse
+    ITensors.enable_threaded_blocksparse()
+  else
+    ITensors.disable_threaded_blocksparse()
+  end
   @show ITensors.using_threaded_blocksparse()
 
   N = Nx * Ny
 
   nsweeps = 10
-  maxdims = min.([100, 200, 400, 800, 2000, 3000, maxdim], maxdim)
+  max_maxdim = maxdim
+  maxdim = min.([100, 200, 400, 800, 2000, 3000, max_maxdim], max_maxdim)
   cutoff = 1e-6
   noise = [1e-6, 1e-7, 1e-8, 0.0]
   @show nsweeps
-  @show maxdims
+  @show maxdim
   @show cutoff
   @show noise
 
@@ -67,7 +92,7 @@ function main(;
   psi0 = randomMPS(sites, state; linkdims=10)
 
   energy, psi = @time dmrg(
-    ThreadedSum(H), psi0; nsweeps, maxdims, cutoff, noise
+    Sum(H), psi0; nsweeps, maxdim, cutoff, noise
   )
   @show Nx, Ny
   @show t, U
@@ -76,16 +101,3 @@ function main(;
   @show energy
   return energy, H, psi
 end
-
-function custom_in_partition(sites::Tuple, p, nparts)
-  return p == mod1(sites[1], nparts)
-end
-
-ITensors.BLAS.set_num_threads(1)
-ITensors.Strided.disable_threads()
-ITensors.disable_threaded_blocksparse()
-
-# A function that specifies which partition/processor that an
-# MPO term will be on.
-in_partition = ITensorParallel.default_in_partition # or: custom_in_partition
-main(; in_partition)

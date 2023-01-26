@@ -1,22 +1,20 @@
+using MPI
 using ITensors
 using ITensorParallel
 using Random
 
-# Number of threads to use
-nthreads = 2
+MPI.Init()
 
 ITensors.BLAS.set_num_threads(1)
 ITensors.Strided.disable_threads()
+ITensors.disable_threaded_blocksparse()
 
-# Turn block sparse multithreading on or off
-ITensors.enable_threaded_blocksparse()
+seed = 1234
+Random.seed!(seed)
 
-@show Threads.nthreads()
-@show nthreads
+mpi_projmpo = true
 
-threaded_projmpo = nthreads > 1
-
-Nx, Ny = 10, 5
+Nx, Ny = 4, 1
 N = Nx * Ny
 
 sites = siteinds("S=1/2", N; conserve_qns=true)
@@ -41,25 +39,27 @@ function in_partition(sites::Tuple{Int,Int}, p, nparts)
   return p == mod1(i, nparts)
 end
 
-ℋs = partition(ℋ, nthreads; in_partition)
-H = [MPO(ℋ, sites) for ℋ in ℋs]
+nprocs = MPI.Comm_size(MPI.COMM_WORLD)
+ℋs = partition(ℋ, nprocs; in_partition=in_partition)
 
-PH = if threaded_projmpo
-  ThreadedSum(H)
+PH = if mpi_projmpo
+  n = MPI.Comm_rank(MPI.COMM_WORLD) + 1
+  MPISum(ProjMPO(MPO(ℋs[n], sites)))
 else
   ProjMPOSum(H)
 end
 
 state = [isodd(n) ? "Up" : "Dn" for n in 1:N]
-Random.seed!(1234)
 psi0 = randomMPS(sites, state; linkdims=10)
 
 nsweeps = 10
 maxdim = [20, 60, 100, 100, 200, 400, 800]
-cutoff = 1e-6
+cutoff = 1e-10
 @show nsweeps
 @show maxdim
 @show cutoff
 
 energy, psi = dmrg(PH, psi0; nsweeps, maxdim, cutoff)
 @show energy
+
+MPI.Finalize()
