@@ -87,3 +87,5 @@ function main(;
   @show energy
   return energy, H, psi
 end
+
+main()

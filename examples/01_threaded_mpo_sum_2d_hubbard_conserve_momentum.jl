@@ -17,6 +17,12 @@ ITensors.Strided.disable_threads()
 """
 Run with:
 ```julia
+# No blocksparse multithreading
+main(; Sum=ThreadedSum);
+main(; Sum=DistributedSum);
+main(; Sum=SequentialSum);
+
+# Blocksparse multithreading
 main(; Sum=ThreadedSum, threaded_blocksparse=true);
 main(; Sum=DistributedSum, threaded_blocksparse=true);
 main(; Sum=SequentialSum, threaded_blocksparse=true);

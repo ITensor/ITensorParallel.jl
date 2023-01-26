@@ -78,11 +78,11 @@ end
 function position!(sum::ParallelSum, psi::MPS, pos::Int)
   exec = executor(sum)
   if exec isa DistributedEx
-    # Use threaded instead
+    # Use threaded instead, distributed is broken for some reason
     exec = ThreadedEx()
   end
-  Folds.map!(term -> position!(term, psi, pos), terms(sum), terms(sum), exec)
-  return sum
+  new_terms = Folds.map(term -> position!(term, psi, pos), terms(sum), exec)
+  return set_terms(sum, new_terms)
 end
 
 function noiseterm(sum::ParallelSum, phi::ITensor, dir::String)
