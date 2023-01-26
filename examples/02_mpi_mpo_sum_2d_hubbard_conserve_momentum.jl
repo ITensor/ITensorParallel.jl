@@ -9,7 +9,12 @@ include(joinpath(pkgdir(ITensors), "examples", "src", "hubbard.jl"))
 ITensors.BLAS.set_num_threads(1)
 ITensors.Strided.disable_threads()
 
-# Run with `main()`
+"""
+Run at the command line with 4 processes:
+```
+mpiexecjl -n 4 julia 02_mpi_mpo_sum_2d_hubbard_conserve_momentum.jl
+```
+"""
 function main(;
   Nx::Int=6,
   Ny::Int=3,
