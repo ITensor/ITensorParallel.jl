@@ -1,15 +1,20 @@
 using ITensors
 using ITensorParallel
+using Random
+
+# Number of threads to use
+nthreads = 2
 
 ITensors.BLAS.set_num_threads(1)
 ITensors.Strided.disable_threads()
 
 # Turn block sparse multithreading on or off
-ITensors.disable_threaded_blocksparse()
+ITensors.enable_threaded_blocksparse()
 
 @show Threads.nthreads()
+@show nthreads
 
-threaded_projmpo = true
+threaded_projmpo = nthreads > 1
 
 Nx, Ny = 10, 5
 N = Nx * Ny
@@ -36,26 +41,25 @@ function in_partition(sites::Tuple{Int,Int}, p, nparts)
   return p == mod1(i, nparts)
 end
 
-ℋs = partition(ℋ, Threads.nthreads(); in_partition=in_partition)
-
-H = Vector{MPO}(undef, Threads.nthreads())
-Threads.@threads for n in 1:Threads.nthreads()
-  H[Threads.threadid()] = splitblocks(linkinds, MPO(ℋs[n], sites))
-end
+ℋs = partition(ℋ, nthreads; in_partition)
+H = [MPO(ℋ, sites) for ℋ in ℋs]
 
 PH = if threaded_projmpo
-  ThreadedProjMPOSum(H)
+  ThreadedSum(H)
 else
   ProjMPOSum(H)
 end
 
 state = [isodd(n) ? "Up" : "Dn" for n in 1:N]
-psi0 = randomMPS(sites, state, 10)
+Random.seed!(1234)
+psi0 = randomMPS(sites, state; linkdims=10)
 
-sweeps = Sweeps(10)
-setmaxdim!(sweeps, 20, 60, 100, 100, 200, 400, 800)
-setcutoff!(sweeps, 1E-10)
-@show sweeps
+nsweeps = 10
+maxdim = [20, 60, 100, 100, 200, 400, 800]
+cutoff = 1e-6
+@show nsweeps
+@show maxdim
+@show cutoff
 
-energy, psi = dmrg(PH, psi0, sweeps)
+energy, psi = dmrg(PH, psi0; nsweeps, maxdim, cutoff)
 @show energy

@@ -6,14 +6,20 @@ using MPI
 using ITensors
 using ITensors.NDTensors
 
+import Base: eltype, length, size
 import ITensors: product, position!, noiseterm, lproj, rproj, nsite, replaceind!, linkind
 
+include("mpi_extensions.jl")
 include("partition.jl")
-include("threaded_projmposum.jl")
-include("distributed_projmposum.jl")
-include("mpi_aux.jl")
-include("mpi_projmposum.jl")
+include("threadedsum.jl")
+include("mpisum.jl")
 
-export ThreadedProjMPOSum, partition, DistributedSum, MPISum
+# BROKEN
+# include("distributedsum.jl")
+
+export partition,
+  ThreadedSum,
+  ThreadedProjMPOSum,
+  MPISum
 
 end

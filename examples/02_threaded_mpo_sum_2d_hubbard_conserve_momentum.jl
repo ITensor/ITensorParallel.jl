@@ -22,24 +22,20 @@ function main(;
 
   N = Nx * Ny
 
-  sweeps = Sweeps(10)
+  nsweeps = 10
   maxdims = min.([100, 200, 400, 800, 2000, 3000, maxdim], maxdim)
-  setmaxdim!(sweeps, maxdims...)
-  setcutoff!(sweeps, 1e-6)
-  setnoise!(sweeps, 1e-6, 1e-7, 1e-8, 0.0)
-  @show sweeps
+  cutoff = 1e-6
+  noise = [1e-6, 1e-7, 1e-8, 0.0]
+  @show nsweeps
+  @show maxdims
+  @show cutoff
+  @show noise
 
   sites = siteinds("ElecK", N; conserve_qns=true, conserve_ky=conserve_ky, modulus_ky=Ny)
 
   ℋ = hubbard(; Nx=Nx, Ny=Ny, t=t, U=U, ky=true)
-  ℋs = partition(ℋ, Threads.nthreads(); in_partition=in_partition)
-
-  H = Vector{MPO}(undef, Threads.nthreads())
-  Threads.@threads for n in 1:length(ℋs)
-    Hn = MPO(ℋs[n], sites)
-    Hn = use_splitblocks ? splitblocks(linkinds, Hn) : Hn
-    H[n] = Hn
-  end
+  ℋs = partition(ℋ, Threads.nthreads(); in_partition)
+  H = [MPO(ℋ, sites) for ℋ in ℋs]
 
   @show maxlinkdim.(H)
 
@@ -68,10 +64,10 @@ function main(;
     end
   end
 
-  psi0 = randomMPS(sites, state, 10)
+  psi0 = randomMPS(sites, state; linkdims=10)
 
   energy, psi = @time dmrg(
-    ThreadedProjMPOSum(H), psi0, sweeps; svd_alg="divide_and_conquer"
+    ThreadedSum(H), psi0; nsweeps, maxdims, cutoff, noise
   )
   @show Nx, Ny
   @show t, U
@@ -85,8 +81,6 @@ function custom_in_partition(sites::Tuple, p, nparts)
   return p == mod1(sites[1], nparts)
 end
 
-Random.seed!(1234)
-
 ITensors.BLAS.set_num_threads(1)
 ITensors.Strided.disable_threads()
 ITensors.disable_threaded_blocksparse()
@@ -94,4 +88,4 @@ ITensors.disable_threaded_blocksparse()
 # A function that specifies which partition/processor that an
 # MPO term will be on.
 in_partition = ITensorParallel.default_in_partition # or: custom_in_partition
-main(; in_partition=in_partition)
+main(; in_partition)

@@ -1,3 +1,4 @@
+# WARNING: This is currently broken!
 struct DistributedSum{T}
   pm::Vector{T}
 end

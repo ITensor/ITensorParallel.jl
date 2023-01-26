@@ -1,12 +1,3 @@
-function MPI.RBuffer(senddata::ITensor, recvdata::ITensor)
-  senddata = permute(senddata, inds(recvdata); allow_alias=true)
-  @assert inds(senddata) == inds(recvdata)
-  _senddata = ITensors.data(senddata)
-  _recvdata = ITensors.data(recvdata)
-  @assert length(_senddata) == length(_recvdata)
-  return MPI.RBuffer(_senddata, _recvdata)
-end
-
 struct MPISum{T}
   data::T
   comm::MPI.Comm

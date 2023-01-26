@@ -42,18 +42,20 @@ end
 ℋs = partition(ℋ, nprocs; in_partition=in_partition)
 
 PH = if distributed_projmpo
-  DistributedSum(n -> ProjMPO(splitblocks(linkinds, MPO(ℋs[n], sites))), nprocs)
+  DistributedSum(n -> ProjMPO(MPO(ℋs[n], sites)), nprocs)
 else
   ProjMPOSum(H)
 end
 
 state = [isodd(n) ? "Up" : "Dn" for n in 1:N]
-psi0 = randomMPS(sites, state, 10)
+psi0 = randomMPS(sites, state; linkdims=10)
 
-sweeps = Sweeps(10)
-setmaxdim!(sweeps, 20, 60, 100, 100, 200, 400, 800)
-setcutoff!(sweeps, 1E-10)
-@show sweeps
+nsweeps = 10
+maxdims = [20, 60, 100, 100, 200, 400, 800]
+cutoff = 1e-10
+@show nsweeps
+@show maxdims
+@show cutoff
 
-energy, psi = dmrg(PH, psi0, sweeps)
+energy, psi = dmrg(PH, psi0; nsweeps, maxdims, cutoff)
 @show energy
