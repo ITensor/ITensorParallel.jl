@@ -5,7 +5,9 @@ using Test
 @testset "ITensorParallel.jl" begin
   examples_dir = joinpath(pkgdir(ITensorParallel), "examples")
 
-  example_files = filter(f -> startswith(f, "01_") && endswith(f, ".jl"), readdir(examples_dir))
+  example_files = filter(
+    f -> startswith(f, "01_") && endswith(f, ".jl"), readdir(examples_dir)
+  )
   @testset "Threaded/Distributed example $example_file" for example_file in example_files
     include(joinpath(examples_dir, example_file))
     Nx = 8
@@ -26,7 +28,9 @@ using Test
     Ny = 4
     maxdim = 20
     mpiexec() do exe  # MPI wrapper
-      run(`$exe -n $(nprocs) $(Base.julia_cmd()) $(joinpath(examples_dir, example_file)) --Nx $(Nx) --Ny $(Ny) --maxdim $(maxdim)`)
+      run(
+        `$exe -n $(nprocs) $(Base.julia_cmd()) $(joinpath(examples_dir, example_file)) --Nx $(Nx) --Ny $(Ny) --maxdim $(maxdim)`,
+      )
     end
   end
 end
