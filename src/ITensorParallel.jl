@@ -14,11 +14,6 @@ include("partition.jl")
 include("parallelsum.jl")
 include("mpisum.jl")
 
-export DistributedSum,
-  SequentialSum,
-  ThreadedSum,
-  ThreadedProjMPOSum,
-  MPISum,
-  partition
+export DistributedSum, SequentialSum, ThreadedSum, MPISum, partition
 
 end

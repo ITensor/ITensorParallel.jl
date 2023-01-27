@@ -79,9 +79,7 @@ function main(;
   ℋs = partition(ℋ, MPI.Comm_size(MPI.COMM_WORLD); in_partition)
   n = MPI.Comm_rank(MPI.COMM_WORLD) + 1
   PH = MPISum(ProjMPO(MPO(ℋs[n], sites)))
-  energy, psi = @time dmrg(
-    PH, psi0; nsweeps, maxdim, cutoff, noise
-  )
+  energy, psi = @time dmrg(PH, psi0; nsweeps, maxdim, cutoff, noise)
 
   MPI.Finalize()
 

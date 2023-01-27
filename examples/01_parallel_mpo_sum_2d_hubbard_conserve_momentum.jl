@@ -18,24 +18,25 @@ ITensors.Strided.disable_threads()
 Run with:
 ```julia
 # No blocksparse multithreading
-main(; Sum=ThreadedSum);
-main(; Sum=DistributedSum);
-main(; Sum=SequentialSum);
+main(; Nx=8, Ny=4, maxdim=1000, Sum=ThreadedSum);
+main(; Nx=8, Ny=4, maxdim=1000, Sum=DistributedSum);
+main(; Nx=8, Ny=4, maxdim=1000, Sum=SequentialSum);
 
 # Blocksparse multithreading
-main(; Sum=ThreadedSum, threaded_blocksparse=true);
-main(; Sum=DistributedSum, threaded_blocksparse=true);
-main(; Sum=SequentialSum, threaded_blocksparse=true);
+main(; Nx=8, Ny=4, maxdim=1000, Sum=ThreadedSum, threaded_blocksparse=true);
+main(; Nx=8, Ny=4, maxdim=1000, Sum=DistributedSum, threaded_blocksparse=true);
+main(; Nx=8, Ny=4, maxdim=1000, Sum=SequentialSum, threaded_blocksparse=true);
 ```
 """
 function main(;
-  Nx::Int=6,
-  Ny::Int=3,
+  Nx::Int,
+  Ny::Int,
   U::Float64=4.0,
   t::Float64=1.0,
   maxdim::Int=3000,
   conserve_ky=true,
   seed=1234,
+  npartitions=2Ny,
   Sum,
   threaded_blocksparse=false,
   in_partition=ITensorParallel.default_in_partition,
@@ -65,7 +66,7 @@ function main(;
   sites = siteinds("ElecK", N; conserve_qns=true, conserve_ky=conserve_ky, modulus_ky=Ny)
 
   ℋ = hubbard(; Nx=Nx, Ny=Ny, t=t, U=U, ky=true)
-  ℋs = partition(ℋ, Threads.nthreads(); in_partition)
+  ℋs = partition(ℋ, npartitions; in_partition)
   H = [MPO(ℋ, sites) for ℋ in ℋs]
 
   @show maxlinkdim.(H)
@@ -97,9 +98,7 @@ function main(;
 
   psi0 = randomMPS(sites, state; linkdims=10)
 
-  energy, psi = @time dmrg(
-    Sum(H), psi0; nsweeps, maxdim, cutoff, noise
-  )
+  energy, psi = @time dmrg(Sum(H), psi0; nsweeps, maxdim, cutoff, noise)
   @show Nx, Ny
   @show t, U
   @show flux(psi)

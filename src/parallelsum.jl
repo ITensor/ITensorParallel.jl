@@ -6,6 +6,7 @@ end
 terms(sum::ParallelSum) = sum.terms
 executor(sum::ParallelSum) = sum.executor
 set_terms(sum::ParallelSum, terms) = ParallelSum(terms, executor(sum))
+set_executor(sum::ParallelSum, executor) = ParallelSum(terms(sum), executor)
 
 function ParallelSum{T,Ex}(terms::Vector; executor_kwargs...) where {T,Ex}
   return ParallelSum(terms, Ex(; executor_kwargs...))
@@ -76,13 +77,14 @@ function product(sum::ParallelSum, v::ITensor)
 end
 
 function position!(sum::ParallelSum, psi::MPS, pos::Int)
-  exec = executor(sum)
-  if exec isa DistributedEx
-    # Use threaded instead, distributed is broken for some reason
-    exec = ThreadedEx()
-  end
-  new_terms = Folds.map(term -> position!(term, psi, pos), terms(sum), exec)
+  new_terms = Folds.map(term -> position!(term, psi, pos), terms(sum), executor(sum))
   return set_terms(sum, new_terms)
+end
+
+# This requires internal changes to `ITensors.dmrg`.
+function position!(sum::ParallelSum{<:Any,<:DistributedEx}, psi::MPS, pos::Int)
+  threaded_sum = position!(set_executor(sum, ThreadedEx()), psi, pos)
+  return set_executor(threaded_sum, executor(sum))
 end
 
 function noiseterm(sum::ParallelSum, phi::ITensor, dir::String)
@@ -96,7 +98,3 @@ end
 const ThreadedSum{T} = ParallelSum{T,ThreadedEx}
 const DistributedSum{T} = ParallelSum{T,DistributedEx}
 const SequentialSum{T} = ParallelSum{T,SequentialEx}
-
-const ThreadedProjMPOSum = ThreadedSum{ProjMPO}
-const DistributedProjMPOSum = DistributedSum{ProjMPO}
-const SequentialProjMPOSum = SequentialSum{ProjMPO}
