@@ -25,7 +25,7 @@ end
 
 size(sum::MPISum) = size(term(sum))
 
-function position!(sum::MPISum{T}, psi::MPS, pos::Int) where {T<:ITensors.AbstractProjMPO}
+function position!(sum::MPISum, psi::MPS, pos::Int)
   makeL!(sum, psi, pos - 1)
   makeR!(sum, psi, pos + nsite(sum))
   return sum
@@ -41,7 +41,7 @@ function makeR!(sum::MPISum, psi::MPS, k::Int)
   return sum
 end
 
-function _makeL!(sum::MPISum, psi::MPS, k::Int)::Union{ITensor,Nothing}
+function _makeL!(sum::MPISum, psi::MPS, k::Int)
   # Save the last `L` that is made to help with caching
   # for DiskProjMPO
   sum_term = term(sum)
@@ -72,7 +72,7 @@ function _makeL!(sum::MPISum, psi::MPS, k::Int)::Union{ITensor,Nothing}
   return L
 end
 
-function _makeR!(sum::MPISum{ProjMPO}, psi::MPS, k::Int)::Union{ITensor,Nothing}
+function _makeR!(sum::MPISum, psi::MPS, k::Int)
   # Save the last `R` that is made to help with caching
   # for DiskProjMPO
   sum_term = term(sum)
