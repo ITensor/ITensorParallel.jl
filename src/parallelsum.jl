@@ -100,3 +100,19 @@ end
 const ThreadedSum{T} = ParallelSum{T,ThreadedEx}
 const DistributedSum{T} = ParallelSum{T,DistributedEx}
 const SequentialSum{T} = ParallelSum{T,SequentialEx}
+
+# Functionality for sums where terms are distributed remotely
+# function product(sum::DistributedSum{<:Future}, v::ITensor)
+#   return Folds.sum(term -> fetch(term)(v), terms(sum), executor(sum))
+# end
+#
+# function position!(sum::DistributedSum{<:Future}, psi::MPS, pos::Int)
+#   new_terms = Folds.map(terms(sum), executor(sum)) do term
+#     return @spawnat(term.where, position!(fetch(term), psi, pos))
+#   end
+#   return set_terms(sum, new_terms)
+# end
+#
+# function noiseterm(sum::ParallelSum{<:Future}, phi::ITensor, dir::String)
+#   return Folds.sum(term -> noiseterm(fetch(term), phi, dir), terms(sum), executor(sum))
+# end
