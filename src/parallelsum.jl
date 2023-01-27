@@ -58,7 +58,7 @@ function ParallelSum(mpos::MPO...; executor_kwargs...)
   return ParallelSum([mpos...]; executor_kwargs...)
 end
 
-# Replace with `AbstractSum`
+# TODO: Replace with `AbstractSum` once we merge:
 # https://github.com/ITensor/ITensors.jl/pull/1046
 nsite(sum::ParallelSum) = nsite(terms(sum)[1])
 length(sum::ParallelSum) = length(terms(sum)[1])
@@ -81,7 +81,8 @@ function position!(sum::ParallelSum, psi::MPS, pos::Int)
   return set_terms(sum, new_terms)
 end
 
-# This requires internal changes to `ITensors.dmrg`.
+# TODO: Remove once we merge:
+# https://github.com/ITensor/ITensors.jl/pull/1047
 function position!(sum::ParallelSum{<:Any,<:DistributedEx}, psi::MPS, pos::Int)
   threaded_sum = position!(set_executor(sum, ThreadedEx()), psi, pos)
   return set_executor(threaded_sum, executor(sum))

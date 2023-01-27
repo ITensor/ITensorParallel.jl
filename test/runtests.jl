@@ -8,9 +8,11 @@ using Test
   @testset "Example $example_file" for example_file in example_files
     include(joinpath(examples_dir, example_file))
     maxdim = 20
+    Nx = 8
+    Ny = 4
     Sums = (ThreadedSum, DistributedSum, SequentialSum)
     @testset "Sum type $Sum" for Sum in Sums
-      main(; maxdim, Sum)
+      main(; Nx, Ny, maxdim, Sum)
     end
   end
 end
