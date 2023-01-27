@@ -1,7 +1,7 @@
 using Distributed
 
 rmprocs(setdiff(procs(), 1))
-addprocs(4)
+addprocs(2)
 @show nprocs()
 
 @everywhere using ITensors
@@ -44,6 +44,7 @@ function main(;
   Random.seed!(seed)
   @show Threads.nthreads()
 
+  # TODO: Use `ITensors.enable_threaded_blocksparse(threaded_blocksparse)`
   if threaded_blocksparse
     ITensors.enable_threaded_blocksparse()
   else

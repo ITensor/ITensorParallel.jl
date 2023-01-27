@@ -1,3 +1,4 @@
+# TODO: Make `AbstractSum` subtype
 struct ParallelSum{T,Ex}
   terms::Vector{T}
   executor::Ex
@@ -73,7 +74,7 @@ end
 size(sum::ParallelSum) = size(terms(sum)[1])
 
 function product(sum::ParallelSum, v::ITensor)
-  return Folds.sum(term -> product(term, v), terms(sum), executor(sum))
+  return Folds.sum(term -> term(v), terms(sum), executor(sum))
 end
 
 function position!(sum::ParallelSum, psi::MPS, pos::Int)

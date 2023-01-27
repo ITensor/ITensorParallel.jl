@@ -11,13 +11,18 @@ ITensors.Strided.disable_threads()
 
 """
 Run at the command line with 4 processes:
+```julia
+# 02_mpi_run.jl
+include("02_mpi_mpo_sum_2d_hubbard_conserve_momentum.jl")
+main(; Nx=8, Ny=4, maxdim=1000, threaded_blocksparse=false);
 ```
-mpiexecjl -n 4 julia 02_mpi_mpo_sum_2d_hubbard_conserve_momentum.jl
+```
+mpiexecjl -n 4 julia 02_mpi_run.jl
 ```
 """
 function main(;
-  Nx::Int=6,
-  Ny::Int=3,
+  Nx::Int,
+  Ny::Int,
   U::Float64=4.0,
   t::Float64=1.0,
   maxdim::Int=3000,
@@ -29,6 +34,7 @@ function main(;
   Random.seed!(seed)
   @show Threads.nthreads()
 
+  # TODO: Use `ITensors.enable_threaded_blocksparse(threaded_blocksparse)`
   if threaded_blocksparse
     ITensors.enable_threaded_blocksparse()
   else
@@ -75,20 +81,15 @@ function main(;
   psi0 = randomMPS(sites, state; linkdims=10)
 
   MPI.Init()
-
   ℋs = partition(ℋ, MPI.Comm_size(MPI.COMM_WORLD); in_partition)
   n = MPI.Comm_rank(MPI.COMM_WORLD) + 1
   PH = MPISum(ProjMPO(MPO(ℋs[n], sites)))
   energy, psi = @time dmrg(PH, psi0; nsweeps, maxdim, cutoff, noise)
-
-  MPI.Finalize()
 
   @show Nx, Ny
   @show t, U
   @show flux(psi)
   @show maxlinkdim(psi)
   @show energy
-  return energy, H, psi
+  return energy, psi
 end
-
-main()
