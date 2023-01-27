@@ -12,8 +12,6 @@ ITensors.disable_threaded_blocksparse()
 seed = 1234
 Random.seed!(seed)
 
-mpi_projmpo = true
-
 Nx, Ny = 8, 1
 N = Nx * Ny
 
@@ -48,12 +46,8 @@ opsums = collect(
   Iterators.partition(partition(opsum, nparts; in_partition=in_partition), nparts_per_proc)
 )
 
-PH = if mpi_projmpo
-  n = MPI.Comm_rank(MPI.COMM_WORLD) + 1
-  MPISum(ThreadedProjMPOSum([MPO(opsum, sites) for opsum in opsums[n]]))
-else
-  ProjMPOSum(H)
-end
+n = MPI.Comm_rank(MPI.COMM_WORLD) + 1
+PH = MPISum(ThreadedSum([MPO(opsum, sites) for opsum in opsums[n]]))
 
 state = [isodd(n) ? "Up" : "Dn" for n in 1:N]
 psi0 = randomMPS(sites, state, 10)
