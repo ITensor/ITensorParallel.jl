@@ -12,12 +12,10 @@ ITensors.Strided.disable_threads()
 """
 Run at the command line with 4 processes:
 ```julia
-# 02_mpi_run.jl
-include("02_mpi_mpo_sum_2d_hubbard_conserve_momentum.jl")
-main(; Nx=8, Ny=4, maxdim=1000, threaded_blocksparse=false);
-```
-```
-mpiexecjl -n 4 julia 02_mpi_run.jl
+mpiexecjl -n 2 julia 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 20
+
+# Currently is broken!
+mpiexecjl -n 2 julia -t2 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 20 --threaded_blocksparse true
 ```
 """
 function main(;
@@ -31,7 +29,12 @@ function main(;
   threaded_blocksparse=false,
   in_partition=ITensorParallel.default_in_partition,
 )
+  # It is very important to set both of these RNG seeds!
+  # This ensures the same state and the same ITensor indices
+  # are made in each process
   Random.seed!(seed)
+  Random.seed!(index_id_rng(), seed)
+
   @show Threads.nthreads()
 
   # TODO: Use `ITensors.enable_threaded_blocksparse(threaded_blocksparse)`
@@ -54,9 +57,8 @@ function main(;
   @show cutoff
   @show noise
 
-  sites = siteinds("ElecK", N; conserve_qns=true, conserve_ky=conserve_ky, modulus_ky=Ny)
-
-  ℋ = hubbard(; Nx=Nx, Ny=Ny, t=t, U=U, ky=true)
+  # Create a lazy representation of the Hamiltonian
+  ℋ = hubbard(; Nx, Ny, t, U, ky=true)
 
   # Create start state
   state = Vector{String}(undef, N)
@@ -77,13 +79,14 @@ function main(;
       end
     end
   end
-
+  sites = siteinds("ElecK", N; conserve_qns=true, conserve_ky, modulus_ky=Ny)
   psi0 = randomMPS(sites, state; linkdims=10)
 
   MPI.Init()
-  ℋs = partition(ℋ, MPI.Comm_size(MPI.COMM_WORLD); in_partition)
-  n = MPI.Comm_rank(MPI.COMM_WORLD) + 1
-  PH = MPISum(ProjMPO(MPO(ℋs[n], sites)))
+  nprocs = MPI.Comm_size(MPI.COMM_WORLD)
+  ℋs = partition(ℋ, nprocs; in_partition)
+  which_proc = MPI.Comm_rank(MPI.COMM_WORLD) + 1
+  PH = MPISum(ProjMPO(MPO(ℋs[which_proc], sites)))
   energy, psi = @time dmrg(PH, psi0; nsweeps, maxdim, cutoff, noise)
 
   @show Nx, Ny

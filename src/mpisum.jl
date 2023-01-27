@@ -1,106 +1,110 @@
 struct MPISum{T}
-  data::T
+  term::T
   comm::MPI.Comm
 end
+term(sum::MPISum) = sum.term
+comm(sum::MPISum) = sum.comm
 
-MPISum(data::T, comm=MPI.COMM_WORLD) where {T} = MPISum{T}(data, comm)
+MPISum(term::T, comm=MPI.COMM_WORLD) where {T} = MPISum{T}(term, comm)
 
-nsite(P::MPISum) = nsite(P.data)
+MPISum(mpo::MPO, comm=MPI.COMM_WORLD) = MPISum(ProjMPO(mpo), comm)
 
-Base.length(P::MPISum) = length(P.data)
+nsite(sum::MPISum) = nsite(term(sum))
 
-function product(P::MPISum, v::ITensor)
-  return allreduce(P.data(v), +, P.comm)
+length(sum::MPISum) = length(term(sum))
+
+function product(sum::MPISum, v::ITensor)
+  return allreduce(term(sum)(v), +, comm(sum))
 end
 
-function Base.eltype(P::MPISum)
-  return eltype(P.data)
+function eltype(sum::MPISum)
+  return eltype(term(sum))
 end
 
-(P::MPISum)(v::ITensor) = product(P, v)
+(sum::MPISum)(v::ITensor) = product(sum, v)
 
-Base.size(P::MPISum) = size(P.data)
+size(sum::MPISum) = size(term(sum))
 
-function position!(P::MPISum{T}, psi::MPS, pos::Int) where {T<:ITensors.AbstractProjMPO}
-  makeL!(P, psi, pos - 1)
-  makeR!(P, psi, pos + nsite(P))
-  return P
+function position!(sum::MPISum{T}, psi::MPS, pos::Int) where {T<:ITensors.AbstractProjMPO}
+  makeL!(sum, psi, pos - 1)
+  makeR!(sum, psi, pos + nsite(sum))
+  return sum
 end
 
-function makeL!(P::MPISum, psi::MPS, k::Int)
-  _makeL!(P, psi, k)
-  return P
+function makeL!(sum::MPISum, psi::MPS, k::Int)
+  _makeL!(sum, psi, k)
+  return sum
 end
 
-function makeR!(P::MPISum, psi::MPS, k::Int)
-  _makeR!(P, psi, k)
-  return P
+function makeR!(sum::MPISum, psi::MPS, k::Int)
+  _makeR!(sum, psi, k)
+  return sum
 end
 
-function _makeL!(_P::MPISum, psi::MPS, k::Int)::Union{ITensor,Nothing}
+function _makeL!(sum::MPISum, psi::MPS, k::Int)::Union{ITensor,Nothing}
   # Save the last `L` that is made to help with caching
   # for DiskProjMPO
-  P = _P.data
-  ll = P.lpos
+  sum_term = term(sum)
+  ll = sum_term.lpos
   if ll ≥ k
     # Special case when nothing has to be done.
     # Still need to change the position if lproj is
     # being moved backward.
-    P.lpos = k
+    sum_term.lpos = k
     return nothing
   end
   # Make sure ll is at least 0 for the generic logic below
   ll = max(ll, 0)
-  L = lproj(P)
+  L = lproj(sum_term)
   while ll < k
     # sync the linkindex across processes
     mylink = linkind(psi, ll + 1)
-    otherlink = MPI.bcast(mylink, 0, _P.comm)
+    otherlink = MPI.bcast(mylink, 0, comm(sum))
     replaceind!(psi[ll + 1], mylink, otherlink)
     replaceind!(psi[ll + 2], mylink, otherlink)
 
-    L = L * psi[ll + 1] * P.H[ll + 1] * dag(prime(psi[ll + 1]))
-    P.LR[ll + 1] = L
+    L = L * psi[ll + 1] * sum_term.H[ll + 1] * dag(prime(psi[ll + 1]))
+    sum_term.LR[ll + 1] = L
     ll += 1
   end
   # Needed when moving lproj backward.
-  P.lpos = k
+  sum_term.lpos = k
   return L
 end
 
-function _makeR!(_P::MPISum{ProjMPO}, psi::MPS, k::Int)::Union{ITensor,Nothing}
+function _makeR!(sum::MPISum{ProjMPO}, psi::MPS, k::Int)::Union{ITensor,Nothing}
   # Save the last `R` that is made to help with caching
   # for DiskProjMPO
-  P = _P.data
-  rl = P.rpos
+  sum_term = term(sum)
+  rl = sum_term.rpos
   if rl ≤ k
     # Special case when nothing has to be done.
     # Still need to change the position if rproj is
     # being moved backward.
-    P.rpos = k
+    sum_term.rpos = k
     return nothing
   end
-  N = length(P.H)
+  N = length(sum_term.H)
   # Make sure rl is no bigger than `N + 1` for the generic logic below
   rl = min(rl, N + 1)
-  R = rproj(P)
+  R = rproj(sum_term)
   while rl > k
     #sync linkindex across processes
     mylink = linkind(psi, rl - 2)
-    otherlink = MPI.bcast(mylink, 0, _P.comm)
+    otherlink = MPI.bcast(mylink, 0, comm(sum))
     replaceind!(psi[rl - 2], mylink, otherlink)
     replaceind!(psi[rl - 1], mylink, otherlink)
 
-    R = R * psi[rl - 1] * P.H[rl - 1] * dag(prime(psi[rl - 1]))
-    P.LR[rl - 1] = R
+    R = R * psi[rl - 1] * sum_term.H[rl - 1] * dag(prime(psi[rl - 1]))
+    sum_term.LR[rl - 1] = R
     rl -= 1
   end
-  P.rpos = k
+  sum_term.rpos = k
   return R
 end
 
-function noiseterm(P::MPISum, phi::ITensor, dir::String)
+function noiseterm(sum::MPISum, phi::ITensor, dir::String)
   ##ToDo: I think the logic here is wrong.
   ##The noiseterm should be calculated on the reduced P*v and then broadcasted?
-  return allreduce(noiseterm(P.data, phi, dir), +, P.comm)
+  return allreduce(noiseterm(term(sum), phi, dir), +, comm(sum))
 end

@@ -2,7 +2,7 @@
 include("02_mpi_mpo_sum_2d_hubbard_conserve_momentum.jl")
 
 # Run with:
-# mpiexecjl -n 2 julia 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 20
+# mpiexecjl -n 2 julia 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 1000
 
 using ArgParse
 function parse_commandline()

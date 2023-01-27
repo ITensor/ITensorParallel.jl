@@ -23,7 +23,7 @@ using Test
   example_files = ["02_mpi_run.jl"]
   @testset "MPI example $example_file" for example_file in example_files
     println("Running MPI parallel test")
-    nprocs = 1
+    nprocs = 2
     Nx = 8
     Ny = 4
     maxdim = 20
