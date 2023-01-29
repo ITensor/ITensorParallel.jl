@@ -16,7 +16,7 @@ For multithreading, we are using Julia's standard Threads.jl library, and possib
 
 For distributed computing, we will explore Julia's standard [Distributed.jl](https://docs.julialang.org/en/v1/manual/distributed-computing/) library, as well as [MPI.jl](https://juliaparallel.github.io/MPI.jl/latest/).
 
-To run Distributed.jl-based computations on clusters, we will explore using Julia's cluster manager tools like [ClusterManagers.jl](https://github.com/JuliaParallel/ClusterManagers.jl) and [SlurmClusterManager.jl](https://github.com/kleinhenz/SlurmClusterManager.jl).
+To run Distributed.jl-based computations on clusters, we will explore using Julia's cluster manager tools like [ClusterManagers.jl](https://github.com/JuliaParallel/ClusterManagers.jl), [SlurmClusterManager.jl](https://github.com/kleinhenz/SlurmClusterManager.jl), and [MPIClusterManagers.jl](https://github.com/JuliaParallel/MPIClusterManagers.jl).
 
 # Running on clusters
 
