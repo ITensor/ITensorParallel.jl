@@ -14,7 +14,11 @@ using Test
     Ny = 4
     maxdim = 20
     Sums = (ThreadedSum, DistributedSum, SequentialSum)
-    @testset "Sum type $Sum, threaded block sparse $threaded_blocksparse, write-to-disk $disk" for Sum in Sums, threaded_blocksparse in (false, true), disk in (false, true)
+    @testset "Sum type $Sum, threaded block sparse $threaded_blocksparse, write-to-disk $disk" for Sum in
+                                                                                                   Sums,
+      threaded_blocksparse in (false, true),
+      disk in (false, true)
+
       println("Running parallel test with $(Sum)")
       main(; Nx, Ny, maxdim, Sum, disk, threaded_blocksparse)
     end
