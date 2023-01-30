@@ -12,10 +12,11 @@ ITensors.Strided.disable_threads()
 """
 Run at the command line with 4 processes:
 ```julia
-mpiexecjl -n 2 julia 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 20
+mpiexecjl -n 2 julia 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 1000
 
-# Currently is broken!
-mpiexecjl -n 2 julia -t2 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 20 --threaded_blocksparse true
+mpiexecjl -n 2 julia -t2 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 1000 --threaded_blocksparse true
+
+mpiexecjl -n 2 julia -t2 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 1000 --disk true --threaded_blocksparse true
 ```
 """
 function main(;
@@ -27,22 +28,18 @@ function main(;
   conserve_ky=true,
   seed=1234,
   threaded_blocksparse=false,
+  disk=false,
   in_partition=ITensorParallel.default_in_partition,
 )
-  # It is very important to set both of these RNG seeds!
-  # This ensures the same state and the same ITensor indices
-  # are made in each process
+  # Set the random seeds for tensor entries
+  # and Index ids. We want them to be the
+  # same across processes.
   Random.seed!(seed)
   Random.seed!(index_id_rng(), seed)
 
   @show Threads.nthreads()
 
-  # TODO: Use `ITensors.enable_threaded_blocksparse(threaded_blocksparse)`
-  if threaded_blocksparse
-    ITensors.enable_threaded_blocksparse()
-  else
-    ITensors.disable_threaded_blocksparse()
-  end
+  ITensors.enable_threaded_blocksparse(threaded_blocksparse)
   @show ITensors.using_threaded_blocksparse()
 
   N = Nx * Ny
@@ -60,34 +57,32 @@ function main(;
   # Create a lazy representation of the Hamiltonian
   ℋ = hubbard(; Nx, Ny, t, U, ky=true)
 
-  # Create start state
-  state = Vector{String}(undef, N)
-  for i in 1:N
-    x = (i - 1) ÷ Ny
-    y = (i - 1) % Ny
-    if x % 2 == 0
-      if y % 2 == 0
-        state[i] = "Up"
-      else
-        state[i] = "Dn"
-      end
-    else
-      if y % 2 == 0
-        state[i] = "Dn"
-      else
-        state[i] = "Up"
-      end
-    end
+  # Create starting state with checkerboard
+  # pattern
+  state = map(CartesianIndices((Ny, Nx))) do I
+    return iseven(I[1]) ⊻ iseven(I[2]) ? "↓" : "↑"
   end
-  sites = siteinds("ElecK", N; conserve_qns=true, conserve_ky, modulus_ky=Ny)
-  psi0 = randomMPS(sites, state; linkdims=10)
+  display(state)
 
   MPI.Init()
+
+  sites = siteinds("ElecK", N; conserve_qns=true, conserve_ky, modulus_ky=Ny)
+  sites = MPI.bcast(sites, 0, MPI.COMM_WORLD)
+
+  psi0 = randomMPS(sites, state; linkdims=10)
+  psi0 = MPI.bcast(psi0, 0, MPI.COMM_WORLD)
+
   nprocs = MPI.Comm_size(MPI.COMM_WORLD)
   ℋs = partition(ℋ, nprocs; in_partition)
   which_proc = MPI.Comm_rank(MPI.COMM_WORLD) + 1
-  PH = MPISum(ProjMPO(MPO(ℋs[which_proc], sites)))
-  energy, psi = @time dmrg(PH, psi0; nsweeps, maxdim, cutoff, noise)
+  mpo_sum = MPISum(MPO(ℋs[which_proc], sites), MPI.COMM_WORLD)
+
+  if disk
+    # Write-to-disk
+    mpo_sum = ITensors.disk(mpo_sum)
+  end
+
+  energy, psi = @time dmrg(mpo_sum, psi0; nsweeps, maxdim, cutoff, noise)
 
   @show Nx, Ny
   @show t, U

@@ -5,9 +5,7 @@ end
 term(sum::MPISum) = sum.term
 comm(sum::MPISum) = sum.comm
 
-MPISum(term::T, comm=MPI.COMM_WORLD) where {T} = MPISum{T}(term, comm)
-
-MPISum(mpo::MPO, comm=MPI.COMM_WORLD) = MPISum(ProjMPO(mpo), comm)
+MPISum(mpo::MPO, comm::MPI.Comm) = MPISum(ProjMPO(mpo), comm)
 
 nsite(sum::MPISum) = nsite(term(sum))
 

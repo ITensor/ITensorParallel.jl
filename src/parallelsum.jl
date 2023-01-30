@@ -62,6 +62,7 @@ end
 # TODO: Replace with `AbstractSum` once we merge:
 # https://github.com/ITensor/ITensors.jl/pull/1046
 nsite(sum::ParallelSum) = nsite(terms(sum)[1])
+size(sum::ParallelSum) = size(terms(sum)[1])
 length(sum::ParallelSum) = length(terms(sum)[1])
 function eltype(sum::ParallelSum)
   elT = eltype(terms(sum)[1])
@@ -70,12 +71,11 @@ function eltype(sum::ParallelSum)
   end
   return elT
 end
-(sum::ParallelSum)(v::ITensor) = product(sum, v)
-size(sum::ParallelSum) = size(terms(sum)[1])
 
 function product(sum::ParallelSum, v::ITensor)
   return Folds.sum(term -> term(v), terms(sum), executor(sum))
 end
+(sum::ParallelSum)(v::ITensor) = product(sum, v)
 
 function position!(sum::ParallelSum, psi::MPS, pos::Int)
   new_terms = Folds.map(term -> position!(term, psi, pos), terms(sum), executor(sum))
@@ -98,21 +98,4 @@ function disk(sum::ParallelSum; disk_kwargs...)
 end
 
 const ThreadedSum{T} = ParallelSum{T,ThreadedEx}
-const DistributedSum{T} = ParallelSum{T,DistributedEx}
 const SequentialSum{T} = ParallelSum{T,SequentialEx}
-
-# Functionality for sums where terms are distributed remotely
-# function product(sum::DistributedSum{<:Future}, v::ITensor)
-#   return Folds.sum(term -> fetch(term)(v), terms(sum), executor(sum))
-# end
-#
-# function position!(sum::DistributedSum{<:Future}, psi::MPS, pos::Int)
-#   new_terms = Folds.map(terms(sum), executor(sum)) do term
-#     return @spawnat(term.where, position!(fetch(term), psi, pos))
-#   end
-#   return set_terms(sum, new_terms)
-# end
-#
-# function noiseterm(sum::ParallelSum{<:Future}, phi::ITensor, dir::String)
-#   return Folds.sum(term -> noiseterm(fetch(term), phi, dir), terms(sum), executor(sum))
-# end

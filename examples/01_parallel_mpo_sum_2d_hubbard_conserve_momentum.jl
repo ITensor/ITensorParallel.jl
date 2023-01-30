@@ -17,15 +17,23 @@ ITensors.Strided.disable_threads()
 """
 Run with:
 ```julia
-# No blocksparse multithreading
-main(; Nx=8, Ny=4, maxdim=1000, Sum=ThreadedSum);
-main(; Nx=8, Ny=4, maxdim=1000, Sum=DistributedSum);
-main(; Nx=8, Ny=4, maxdim=1000, Sum=SequentialSum);
+# Sequential sum over MPOs.
+# Uses the default `Sum=SequentialSum`.
+main(; Nx=8, Ny=4, maxdim=1000);
+main(; Nx=8, Ny=4, maxdim=1000, threaded_blocksparse=true);
 
-# Blocksparse multithreading
+# Threaded sum over MPOs.
+main(; Nx=8, Ny=4, maxdim=1000, Sum=ThreadedSum);
 main(; Nx=8, Ny=4, maxdim=1000, Sum=ThreadedSum, threaded_blocksparse=true);
+
+# Distributed sum over MPOs, where terms of the MPO
+# sum and their environments are stored, updated,
+# and applied remotely on a worker process.
+main(; Nx=8, Ny=4, maxdim=1000, Sum=DistributedSum);
 main(; Nx=8, Ny=4, maxdim=1000, Sum=DistributedSum, threaded_blocksparse=true);
-main(; Nx=8, Ny=4, maxdim=1000, Sum=SequentialSum, threaded_blocksparse=true);
+
+# Using write-to-disk.
+main(; Nx=8, Ny=4, maxdim=1000, Sum=DistributedSum, disk=true, threaded_blocksparse=true);
 ```
 """
 function main(;
@@ -37,19 +45,17 @@ function main(;
   conserve_ky=true,
   seed=1234,
   npartitions=2Ny,
-  Sum,
+  Sum=SequentialSum,
   threaded_blocksparse=false,
+  disk=false,
   in_partition=ITensorParallel.default_in_partition,
 )
   Random.seed!(seed)
+  Random.seed!(index_id_rng(), seed)
+
   @show Threads.nthreads()
 
-  # TODO: Use `ITensors.enable_threaded_blocksparse(threaded_blocksparse)`
-  if threaded_blocksparse
-    ITensors.enable_threaded_blocksparse()
-  else
-    ITensors.disable_threaded_blocksparse()
-  end
+  ITensors.enable_threaded_blocksparse(threaded_blocksparse)
   @show ITensors.using_threaded_blocksparse()
 
   N = Nx * Ny
@@ -68,42 +74,35 @@ function main(;
 
   ℋ = hubbard(; Nx=Nx, Ny=Ny, t=t, U=U, ky=true)
   ℋs = partition(ℋ, npartitions; in_partition)
-  H = [MPO(ℋ, sites) for ℋ in ℋs]
+  Hs = [MPO(ℋ, sites) for ℋ in ℋs]
 
-  @show maxlinkdim.(H)
+  @show maxlinkdim.(Hs)
 
   # Number of structural nonzero elements in a bulk
   # Hamiltonian MPO tensor
-  @show nnz(H[1][end ÷ 2])
-  @show nnzblocks(H[1][end ÷ 2])
+  @show nnz(Hs[1][end ÷ 2])
+  @show nnzblocks(Hs[1][end ÷ 2])
 
-  # Create start state
-  state = Vector{String}(undef, N)
-  for i in 1:N
-    x = (i - 1) ÷ Ny
-    y = (i - 1) % Ny
-    if x % 2 == 0
-      if y % 2 == 0
-        state[i] = "Up"
-      else
-        state[i] = "Dn"
-      end
-    else
-      if y % 2 == 0
-        state[i] = "Dn"
-      else
-        state[i] = "Up"
-      end
-    end
+  # Create starting state with checkerboard
+  # pattern
+  state = map(CartesianIndices((Ny, Nx))) do I
+    return iseven(I[1]) ⊻ iseven(I[2]) ? "↓" : "↑"
   end
+  display(state)
 
   psi0 = randomMPS(sites, state; linkdims=10)
 
-  energy, psi = @time dmrg(Sum(H), psi0; nsweeps, maxdim, cutoff, noise)
+  mpo_sum = Sum(Hs)
+  if disk
+    # Write-to-disk
+    mpo_sum = ITensors.disk(mpo_sum)
+  end
+
+  energy, psi = @time dmrg(mpo_sum, psi0; nsweeps, maxdim, cutoff, noise)
   @show Nx, Ny
   @show t, U
   @show flux(psi)
   @show maxlinkdim(psi)
   @show energy
-  return energy, H, psi
+  return energy, psi
 end

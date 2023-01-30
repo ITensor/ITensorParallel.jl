@@ -14,14 +14,14 @@ using Test
     Ny = 4
     maxdim = 20
     Sums = (ThreadedSum, DistributedSum, SequentialSum)
-    @testset "Sum type $Sum" for Sum in Sums
+    @testset "Sum type $Sum, threaded block sparse $threaded_blocksparse, write-to-disk $disk" for Sum in Sums, threaded_blocksparse in (false, true), disk in (false, true)
       println("Running parallel test with $(Sum)")
-      main(; Nx, Ny, maxdim, Sum)
+      main(; Nx, Ny, maxdim, Sum, disk, threaded_blocksparse)
     end
   end
 
   example_files = ["02_mpi_run.jl"]
-  @testset "MPI example $example_file" for example_file in example_files
+  @testset "MPI example $example_file, threaded block sparse $threaded_blocksparse, write-to-disk $disk" for example_file in example_files, threaded_blocksparse in (false, true), disk in (false, true)
     println("Running MPI parallel test")
     nprocs = 2
     Nx = 8
@@ -29,7 +29,7 @@ using Test
     maxdim = 20
     mpiexec() do exe  # MPI wrapper
       run(
-        `$exe -n $(nprocs) $(Base.julia_cmd()) $(joinpath(examples_dir, example_file)) --Nx $(Nx) --Ny $(Ny) --maxdim $(maxdim)`,
+        `$exe -n $(nprocs) $(Base.julia_cmd()) $(joinpath(examples_dir, example_file)) --Nx $(Nx) --Ny $(Ny) --maxdim $(maxdim) --disk $(disk) --threaded_blocksparse $(threaded_blocksparse)`,
       )
     end
   end

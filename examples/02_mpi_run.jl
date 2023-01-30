@@ -20,6 +20,10 @@ function parse_commandline()
     help = "Maximum bond dimension"
     arg_type = Int
     required = true
+    "--disk"
+    help = "Write-to-disk"
+    arg_type = Bool
+    default = false
     "--threaded_blocksparse"
     help = "Use threaded block sparse operations"
     arg_type = Bool
@@ -32,5 +36,6 @@ main(;
   Nx=args["Nx"],
   Ny=args["Ny"],
   maxdim=args["maxdim"],
+  disk=args["disk"],
   threaded_blocksparse=args["threaded_blocksparse"],
 );

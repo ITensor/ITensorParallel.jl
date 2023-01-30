@@ -7,13 +7,14 @@ using ITensors
 using ITensors.NDTensors
 
 import Base: eltype, length, size
-import ITensors: product, position!, noiseterm, lproj, rproj, nsite, replaceind!, linkind
+import ITensors: disk, product, position!, noiseterm, lproj, rproj, nsite, replaceind!, linkind
 
-include("mpi_extensions.jl")
 include("partition.jl")
 include("parallelsum.jl")
+include("distributedsum.jl")
+include("mpi_extensions.jl")
 include("mpisum.jl")
 
-export DistributedSum, SequentialSum, ThreadedSum, MPISum, partition
+export DistributedSum, SequentialSum, ThreadedSum, MPISum, distribute, partition
 
 end
