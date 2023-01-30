@@ -25,7 +25,11 @@ using Test
   end
 
   example_files = ["02_mpi_run.jl"]
-  @testset "MPI example $example_file, threaded block sparse $threaded_blocksparse, write-to-disk $disk" for example_file in example_files, threaded_blocksparse in (false, true), disk in (false, true)
+  @testset "MPI example $example_file, threaded block sparse $threaded_blocksparse, write-to-disk $disk" for example_file in
+                                                                                                             example_files,
+    threaded_blocksparse in (false, true),
+    disk in (false, true)
+
     println("Running MPI parallel test")
     nprocs = 2
     Nx = 8
