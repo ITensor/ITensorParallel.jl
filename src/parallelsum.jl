@@ -3,11 +3,11 @@ struct ParallelSum{T,Ex}
   terms::Vector{T}
   executor::Ex
 end
-
 terms(sum::ParallelSum) = sum.terms
 executor(sum::ParallelSum) = sum.executor
-set_terms(sum::ParallelSum, terms) = ParallelSum(terms, executor(sum))
-set_executor(sum::ParallelSum, executor) = ParallelSum(terms(sum), executor)
+
+set_terms(sum::ParallelSum, terms) = @set sum.terms = terms
+set_executor(sum::ParallelSum, executor) = @set = sum.executor = executor
 
 function ParallelSum{T,Ex}(terms::Vector; executor_kwargs...) where {T,Ex}
   return ParallelSum(terms, Ex(; executor_kwargs...))

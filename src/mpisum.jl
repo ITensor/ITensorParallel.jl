@@ -5,11 +5,16 @@ end
 term(sum::MPISum) = sum.term
 comm(sum::MPISum) = sum.comm
 
+set_term(sum::MPISum, term) = @set sum.term = term
+set_comm(sum::MPISum, comm) = @set sum.comm = comm
+
 MPISum(mpo::MPO, comm::MPI.Comm) = MPISum(ProjMPO(mpo), comm)
 
 nsite(sum::MPISum) = nsite(term(sum))
 
 length(sum::MPISum) = length(term(sum))
+
+disk(sum::MPISum) = set_term(sum, disk(term(sum)))
 
 function product(sum::MPISum, v::ITensor)
   return allreduce(term(sum)(v), +, comm(sum))
