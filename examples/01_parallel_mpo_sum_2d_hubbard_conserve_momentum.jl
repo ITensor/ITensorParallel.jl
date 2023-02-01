@@ -50,8 +50,10 @@ function main(;
   disk=false,
   in_partition=ITensorParallel.default_in_partition,
 )
-  Random.seed!(seed)
-  Random.seed!(index_id_rng(), seed)
+  # Helps make results reproducible when comparing
+  # sequential vs. threaded.
+  itensor_rng = Xoshiro()
+  Random.seed!(itensor_rng, seed)
 
   @show Threads.nthreads()
 
@@ -90,7 +92,7 @@ function main(;
   end
   display(state)
 
-  psi0 = randomMPS(sites, state; linkdims=10)
+  psi0 = randomMPS(itensor_rng, sites, state; linkdims=10)
 
   mpo_sum = Sum(Hs)
   if disk

@@ -12,7 +12,7 @@ ITensors.Strided.disable_threads()
 """
 Run at the command line with 4 processes:
 ```julia
-mpiexecjl -n 2 julia 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 1000
+mpiexecjl -n 2 julia -t2 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 1000
 
 mpiexecjl -n 2 julia -t2 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 1000 --threaded_blocksparse true
 
@@ -31,11 +31,10 @@ function main(;
   disk=false,
   in_partition=ITensorParallel.default_in_partition,
 )
-  # Set the random seeds for tensor entries
-  # and Index ids. We want them to be the
-  # same across processes.
-  Random.seed!(seed)
-  Random.seed!(index_id_rng(), seed)
+  # Helps make results reproducible when comparing
+  # sequential vs. threaded.
+  itensor_rng = Xoshiro()
+  Random.seed!(itensor_rng, seed)
 
   @show Threads.nthreads()
 
@@ -69,7 +68,7 @@ function main(;
   sites = siteinds("ElecK", N; conserve_qns=true, conserve_ky, modulus_ky=Ny)
   sites = MPI.bcast(sites, 0, MPI.COMM_WORLD)
 
-  psi0 = randomMPS(sites, state; linkdims=10)
+  psi0 = randomMPS(itensor_rng, sites, state; linkdims=10)
   psi0 = MPI.bcast(psi0, 0, MPI.COMM_WORLD)
 
   nprocs = MPI.Comm_size(MPI.COMM_WORLD)

@@ -19,7 +19,7 @@ using Test
       threaded_blocksparse in (false, true),
       disk in (false, true)
 
-      println("Running parallel test with $(Sum)")
+      println("\nRunning parallel test with $(Sum), threaded block sparse $threaded_blocksparse, write-to-disk $disk")
       main(; Nx, Ny, maxdim, Sum, disk, threaded_blocksparse)
     end
   end
@@ -30,14 +30,14 @@ using Test
     threaded_blocksparse in (false, true),
     disk in (false, true)
 
-    println("Running MPI parallel test")
+    println("\nRunning MPI parallel test with threaded block sparse $threaded_blocksparse, write-to-disk $disk")
     nprocs = 2
     Nx = 8
     Ny = 4
     maxdim = 20
     mpiexec() do exe  # MPI wrapper
       run(
-        `$exe -n $(nprocs) $(Base.julia_cmd()) $(joinpath(examples_dir, example_file)) --Nx $(Nx) --Ny $(Ny) --maxdim $(maxdim) --disk $(disk) --threaded_blocksparse $(threaded_blocksparse)`,
+        `$exe -n $(nprocs) $(Base.julia_cmd()) --threads $(Threads.nthreads()) $(joinpath(examples_dir, example_file)) --Nx $(Nx) --Ny $(Ny) --maxdim $(maxdim) --disk $(disk) --threaded_blocksparse $(threaded_blocksparse)`,
       )
     end
   end
