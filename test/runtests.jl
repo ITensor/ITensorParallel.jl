@@ -19,7 +19,9 @@ using Test
       threaded_blocksparse in (false, true),
       disk in (false, true)
 
-      println("\nRunning parallel test with $(Sum), threaded block sparse $threaded_blocksparse, write-to-disk $disk")
+      println(
+        "\nRunning parallel test with $(Sum), threaded block sparse $threaded_blocksparse, write-to-disk $disk",
+      )
       main(; Nx, Ny, maxdim, Sum, disk, threaded_blocksparse)
     end
   end
@@ -30,7 +32,9 @@ using Test
     threaded_blocksparse in (false, true),
     disk in (false, true)
 
-    println("\nRunning MPI parallel test with threaded block sparse $threaded_blocksparse, write-to-disk $disk")
+    println(
+      "\nRunning MPI parallel test with threaded block sparse $threaded_blocksparse, write-to-disk $disk",
+    )
     nprocs = 2
     Nx = 8
     Ny = 4
