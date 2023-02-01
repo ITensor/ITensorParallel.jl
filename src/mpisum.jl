@@ -36,10 +36,16 @@ size(sum::MPISum) = size(term(sum))
 # block sparse structure inconsistent, especially
 # when multithreading block sparse operations are involved.
 function ITensors.replacebond!(sum::MPISum, M::MPS, b::Int, v::ITensor; kwargs...)
-  spec = replacebond!(M, b, v; kwargs...)
-  M_ortho_lims = ortho_lims(M)
+  spec = nothing
+  M_ortho_lims = nothing
+  if MPI.Comm_rank(comm(sum)) == 0
+    spec = replacebond!(M, b, v; kwargs...)
+    M_ortho_lims = ortho_lims(M)
+  end
   M_b1 = MPI.bcast(M[b], 0, comm(sum))
   M_b2 = MPI.bcast(M[b + 1], 0, comm(sum))
+  M_ortho_lims = MPI.bcast(M_ortho_lims, 0, comm(sum))
+  spec = MPI.bcast(spec, 0, comm(sum))
   M[b] = M_b1
   M[b + 1] = M_b2
   set_ortho_lims!(M, M_ortho_lims)
