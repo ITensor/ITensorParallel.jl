@@ -28,86 +28,30 @@ end
 
 size(sum::MPISum) = size(term(sum))
 
-function position!(sum::MPISum, psi::MPS, pos::Int)
-  makeL!(sum, psi, pos - 1)
-  makeR!(sum, psi, pos + nsite(sum))
-  return sum
+# Replace the bond and then broadcast one of the results
+# to each process. This ensures that the link indices
+# are consistent across processes and that the tensors
+# match numerically. Floating point precision errors
+# have been seen to build up enough to make their
+# block sparse structure inconsistent, especially
+# when multithreading block sparse operations are involved.
+function ITensors.replacebond!(sum::MPISum, M::MPS, b::Int, v::ITensor; kwargs...)
+  spec = replacebond!(M, b, v; kwargs...)
+  M_ortho_lims = ortho_lims(M)
+  M_b1 = MPI.bcast(M[b], 0, comm(sum))
+  M_b2 = MPI.bcast(M[b + 1], 0, comm(sum))
+  M[b] = M_b1
+  M[b + 1] = M_b2
+  set_ortho_lims!(M, M_ortho_lims)
+  return spec
 end
 
-function makeL!(sum::MPISum, psi::MPS, k::Int)
-  _makeL!(sum, psi, k)
-  return sum
+function position!(sum::MPISum, v::MPS, pos::Int)
+  return set_term(sum, position!(term(sum), v, pos))
 end
 
-function makeR!(sum::MPISum, psi::MPS, k::Int)
-  _makeR!(sum, psi, k)
-  return sum
-end
-
-function _makeL!(sum::MPISum, psi::MPS, k::Int)
-  # Save the last `L` that is made to help with caching
-  # for DiskProjMPO
-  sum_term = term(sum)
-  ll = sum_term.lpos
-  if ll ≥ k
-    # Special case when nothing has to be done.
-    # Still need to change the position if lproj is
-    # being moved backward.
-    sum_term.lpos = k
-    return nothing
-  end
-  # Make sure ll is at least 0 for the generic logic below
-  ll = max(ll, 0)
-  L = lproj(sum_term)
-  while ll < k
-    # sync the linkindex across processes
-    mylink = linkind(psi, ll + 1)
-    otherlink = MPI.bcast(mylink, 0, comm(sum))
-    replaceind!(psi[ll + 1], mylink, otherlink)
-    replaceind!(psi[ll + 2], mylink, otherlink)
-
-    L = L * psi[ll + 1] * sum_term.H[ll + 1] * dag(prime(psi[ll + 1]))
-    sum_term.LR[ll + 1] = L
-    ll += 1
-  end
-  # Needed when moving lproj backward.
-  sum_term.lpos = k
-  return L
-end
-
-function _makeR!(sum::MPISum, psi::MPS, k::Int)
-  # Save the last `R` that is made to help with caching
-  # for DiskProjMPO
-  sum_term = term(sum)
-  rl = sum_term.rpos
-  if rl ≤ k
-    # Special case when nothing has to be done.
-    # Still need to change the position if rproj is
-    # being moved backward.
-    sum_term.rpos = k
-    return nothing
-  end
-  N = length(sum_term.H)
-  # Make sure rl is no bigger than `N + 1` for the generic logic below
-  rl = min(rl, N + 1)
-  R = rproj(sum_term)
-  while rl > k
-    #sync linkindex across processes
-    mylink = linkind(psi, rl - 2)
-    otherlink = MPI.bcast(mylink, 0, comm(sum))
-    replaceind!(psi[rl - 2], mylink, otherlink)
-    replaceind!(psi[rl - 1], mylink, otherlink)
-
-    R = R * psi[rl - 1] * sum_term.H[rl - 1] * dag(prime(psi[rl - 1]))
-    sum_term.LR[rl - 1] = R
-    rl -= 1
-  end
-  sum_term.rpos = k
-  return R
-end
-
-function noiseterm(sum::MPISum, phi::ITensor, dir::String)
-  ##ToDo: I think the logic here is wrong.
-  ##The noiseterm should be calculated on the reduced P*v and then broadcasted?
-  return allreduce(noiseterm(term(sum), phi, dir), +, comm(sum))
+function noiseterm(sum::MPISum, v::ITensor, dir::String)
+  # TODO: Check if this logic is correct.
+  # Should the noiseterm instead be calculated on the reduced `sum(v)` and then broadcasted?
+  return allreduce(noiseterm(term(sum), v, dir), +, comm(sum))
 end

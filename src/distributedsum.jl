@@ -10,8 +10,8 @@ function distribute(terms::Vector{MPO})
   return distribute(ProjMPO.(terms))
 end
 
-function position!(term::Future, psi::MPS, pos::Int)
-  return @spawnat term.where position!(fetch(term), psi, pos)
+function position!(term::Future, v::MPS, pos::Int)
+  return @spawnat term.where position!(fetch(term), v, pos)
 end
 
 (term::Future)(v::ITensor) = product(term, v)
@@ -20,8 +20,8 @@ function product(term::Future, v::ITensor)
   return @fetchfrom term.where fetch(term)(v)
 end
 
-function noiseterm(term::Future, phi::ITensor, dir::String)
-  return @fetchfrom term.where noiseterm(fetch(term), phi, dir)
+function noiseterm(term::Future, v::ITensor, dir::String)
+  return @fetchfrom term.where noiseterm(fetch(term), v, dir)
 end
 
 function disk(term::Future; disk_kwargs...)

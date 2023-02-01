@@ -77,20 +77,20 @@ function product(sum::ParallelSum, v::ITensor)
 end
 (sum::ParallelSum)(v::ITensor) = product(sum, v)
 
-function position!(sum::ParallelSum, psi::MPS, pos::Int)
-  new_terms = Folds.map(term -> position!(term, psi, pos), terms(sum), executor(sum))
+function position!(sum::ParallelSum, v::MPS, pos::Int)
+  new_terms = Folds.map(term -> position!(term, v, pos), terms(sum), executor(sum))
   return set_terms(sum, new_terms)
 end
 
 # TODO: Remove once we merge:
 # https://github.com/ITensor/ITensors.jl/pull/1047
-function position!(sum::ParallelSum{<:Any,<:DistributedEx}, psi::MPS, pos::Int)
-  threaded_sum = position!(set_executor(sum, ThreadedEx()), psi, pos)
+function position!(sum::ParallelSum{<:Any,<:DistributedEx}, v::MPS, pos::Int)
+  threaded_sum = position!(set_executor(sum, ThreadedEx()), v, pos)
   return set_executor(threaded_sum, executor(sum))
 end
 
-function noiseterm(sum::ParallelSum, phi::ITensor, dir::String)
-  return Folds.sum(term -> noiseterm(term, phi, dir), terms(sum), executor(sum))
+function noiseterm(sum::ParallelSum, v::ITensor, dir::String)
+  return Folds.sum(term -> noiseterm(term, v, dir), terms(sum), executor(sum))
 end
 
 function disk(sum::ParallelSum; disk_kwargs...)
