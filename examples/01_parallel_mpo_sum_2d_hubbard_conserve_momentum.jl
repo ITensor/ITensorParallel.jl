@@ -100,7 +100,6 @@ function main(;
     psi0 = MPS(sites, state; linkdims=10)
   end
 
-
   mpo_sum = Sum(Hs)
   if disk
     # Write-to-disk
