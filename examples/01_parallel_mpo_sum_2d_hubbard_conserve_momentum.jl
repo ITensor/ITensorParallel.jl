@@ -48,6 +48,7 @@ function main(;
   Sum=SequentialSum,
   threaded_blocksparse=false,
   disk=false,
+  random_init=false,
   in_partition=ITensorParallel.default_in_partition,
 )
   # Helps make results reproducible when comparing
@@ -92,7 +93,13 @@ function main(;
   end
   display(state)
 
-  psi0 = randomMPS(itensor_rng, sites, state; linkdims=10)
+  if random_init
+    # Only available in ITensors 0.3.26
+    psi0 = randomMPS(itensor_rng, sites, state; linkdims=10)
+  else
+    psi0 = MPS(sites, state; linkdims=10)
+  end
+
 
   mpo_sum = Sum(Hs)
   if disk

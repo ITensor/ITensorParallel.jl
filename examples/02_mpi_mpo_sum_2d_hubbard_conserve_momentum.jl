@@ -29,6 +29,7 @@ function main(;
   seed=1234,
   threaded_blocksparse=false,
   disk=false,
+  random_init=false,
   in_partition=ITensorParallel.default_in_partition,
 )
   # Helps make results reproducible when comparing
@@ -68,7 +69,12 @@ function main(;
   sites = siteinds("ElecK", N; conserve_qns=true, conserve_ky, modulus_ky=Ny)
   sites = MPI.bcast(sites, 0, MPI.COMM_WORLD)
 
-  psi0 = randomMPS(itensor_rng, sites, state; linkdims=10)
+  if random_init
+    # Only available in ITensors 0.3.26
+    psi0 = randomMPS(itensor_rng, sites, state; linkdims=10)
+  else
+    psi0 = MPS(sites, state; linkdims=10)
+  end
   psi0 = MPI.bcast(psi0, 0, MPI.COMM_WORLD)
 
   nprocs = MPI.Comm_size(MPI.COMM_WORLD)
