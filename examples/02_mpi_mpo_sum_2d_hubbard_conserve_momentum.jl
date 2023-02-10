@@ -79,14 +79,14 @@ function main(;
   nprocs = MPI.Comm_size(MPI.COMM_WORLD)
   ℋs = partition(ℋ, nprocs; in_partition)
   which_proc = MPI.Comm_rank(MPI.COMM_WORLD) + 1
-  mpo_sum = MPISum(MPO(ℋs[which_proc], sites), MPI.COMM_WORLD)
+  mpo_sum_term = MPISumTerm(MPO(ℋs[which_proc], sites), MPI.COMM_WORLD)
 
   if disk
     # Write-to-disk
-    mpo_sum = ITensors.disk(mpo_sum)
+    mpo_sum_term = ITensors.disk(mpo_sum_term)
   end
 
-  energy, psi = @time dmrg(mpo_sum, psi0; nsweeps, maxdim, cutoff, noise)
+  energy, psi = @time dmrg(mpo_sum_term, psi0; nsweeps, maxdim, cutoff, noise)
 
   @show Nx, Ny
   @show t, U
