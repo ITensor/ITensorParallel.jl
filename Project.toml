@@ -1,17 +1,20 @@
 name = "ITensorParallel"
 uuid = "0fccfcd2-f061-4985-9740-339d3f86bfce"
 authors = ["Matthew Fishman <mfishman@flatironinstitute.org> and contributors"]
-version = "0.0.1"
+version = "0.1.0"
 
 [deps]
+Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 Folds = "41a02a25-b8f0-4f67-bc48-60067656b558"
 ITensors = "9136182c-28ba-11e9-034c-db9fb085ebd5"
 MPI = "da04e1cc-30fd-572f-bb4f-1f8673147195"
 
 [compat]
-ITensors = "0.2, 0.3"
-MPI = "0.19, 0.20"
+Accessors = "0.1.26"
+Folds = "0.2.8"
+ITensors = "0.3.27"
+MPI = "0.20"
 julia = "1.6"
 
 [extras]

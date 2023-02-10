@@ -8,102 +8,12 @@
 
 # Overview
 
-This package is for experimenting with adding more shared and distributed memory parallelism, for example implementing the techniques laid out in the paper https://arxiv.org/abs/2103.09976.
+This package adds more shared and distributed memory parallelism to [ITensors.jl](https://github.com/ITensor/ITensors.jl), for example implementing the techniques for nested parallelization in DMRG laid out in the paper [arXiv:2103.09976](https://arxiv.org/abs/2103.09976). So far, it focuses on parallelizing over optimizing or evolving sums of tensor networks. We plan to add real-space parallel DMRG, TDVP, and TEBD based on [arXiv:1301.3494](https://arxiv.org/abs/1301.3494).
 
-We will explore multithreaded and distributed parallelism over real-space parallel DMRG, TDVP, and TEBD based on https://arxiv.org/abs/1301.3494, as well as multithreaded and distributed parallelism over sums of Hamiltonian terms in DMRG and TDVP.
+For multithreading, we are using Julia's standard Threads.jl library, as well as convenient abstractions on top of that for parallelizing over maps and reductions provided by [Folds.jl](https://github.com/juliafolds/folds.jl) and [FLoops.jl](https://github.com/JuliaFolds/FLoops.jl). See [here](https://juliafolds.github.io/data-parallelism/tutorials/quick-introduction/) for a nice overview of parallelization in Julia.
 
-For multithreading, we are using Julia's standard Threads.jl library, and possibly convenient abstractions on top of that provided by [Folds.jl](https://github.com/juliafolds/folds.jl) and [FLoops.jl](https://github.com/JuliaFolds/FLoops.jl). See [here](https://juliafolds.github.io/data-parallelism/tutorials/quick-introduction/) for a nice overview of the different options.
+For distributed computing, we make use of Julia's standard [Distributed.jl](https://docs.julialang.org/en/v1/manual/distributed-computing/) library along with it's interface through [Folds.jl](https://github.com/juliafolds/folds.jl) and [FLoops.jl](https://github.com/JuliaFolds/FLoops.jl), as well as [MPI.jl](https://juliaparallel.github.io/MPI.jl/latest/). Take a look at Julia'd documentation on [distributed computing](https://docs.julialang.org/en/v1/manual/distributed-computing/) for more information and background.
 
-For distributed computing, we will explore Julia's standard [Distributed.jl](https://docs.julialang.org/en/v1/manual/distributed-computing/) library, as well as [MPI.jl](https://juliaparallel.github.io/MPI.jl/latest/).
+To run Distributed.jl-based computations on clusters, we recommend using Julia's cluster manager tools like [ClusterManagers.jl](https://github.com/JuliaParallel/ClusterManagers.jl), [SlurmClusterManager.jl](https://github.com/kleinhenz/SlurmClusterManager.jl), and [MPIClusterManagers.jl](https://github.com/JuliaParallel/MPIClusterManagers.jl).
 
-To run Distributed.jl-based computations on clusters, we will explore using Julia's cluster manager tools like [ClusterManagers.jl](https://github.com/JuliaParallel/ClusterManagers.jl), [SlurmClusterManager.jl](https://github.com/kleinhenz/SlurmClusterManager.jl), and [MPIClusterManagers.jl](https://github.com/JuliaParallel/MPIClusterManagers.jl).
-
-# Running on clusters
-
-
-## Option 1: `Distributed.jl`
-Here are detailed instructions for running a minimal "hello world" example parallelized with Julia's Distributed.jl standard library, distributed over nodes of a cluster.
-
-1. Start by [downloading the latest version of Julia](https://julialang.org/downloads/) or loading a pre-installed version of Julia, for example with `module load julia`. You can follow more detailed instruction for installing your own version of Julia on a cluster [here](https://itensor.github.io/ITensors.jl/stable/getting_started/Installing.html).
-2. Start Julia by executing the command `julia` at the command line. This should bring up the interactive Julia REPL. From there, you should install either [ClusterManagers.jl](https://github.com/JuliaParallel/ClusterManagers.jl) or [SlurmClusterManager.jl](https://github.com/kleinhenz/SlurmClusterManager.jl) if your cluster uses Slurm as the cluster management and job scheduling system (ClusterManagers.jl supports Slurm, but SlurmClusterManager.jl has a more specialized implementation). This would look something like this:
-```julia
-$ julia
-               _
-   _       _ _(_)_     |  Documentation: https://docs.julialang.org
-  (_)     | (_) (_)    |
-   _ _   _| |_  __ _   |  Type "?" for help, "]?" for Pkg help.
-  | | | | | | |/ _` |  |
-  | | |_| | | | (_| |  |  Version 1.7.2 (2022-02-06)
- _/ |\__'_|_|_|\__'_|  |  Official https://julialang.org/ release
-|__/                   |
-
-julia> using Pkg
-
-julia> Pkg.add("SlurmClusterManager")
-    Updating registry at `~/.julia/registries/General`
-    Updating git-repo `https://github.com/JuliaRegistries/General.git`
-   Resolving package versions...
-   Installed SlurmClusterManager ─ v0.1.2
-    Updating `~/.julia/environments/v1.7/Project.toml`
-  [c82cd089] + SlurmClusterManager v0.1.2
-    Updating `~/.julia/environments/v1.7/Manifest.toml`
-  [c82cd089] + SlurmClusterManager v0.1.2
-Precompiling project...
-  1 dependency successfully precompiled in 2 seconds (456 already precompiled, 2 skipped during auto due to previous errors)
-```
-Now the cluster manager (either `ClusterManagers.jl` or `SlurmClusterManager.jl`, whichever you installed) will be available system-wide for you to use and aid you in running your Distributed.jl-based parallelized Julia code across nodes of your cluster.
-
-3. Create a file somewhere within your home directory on the cluster called `hello_world.jl` with the contents:
-```julia
-#!/usr/bin/env julia
-
-using Distributed, SlurmClusterManager
-addprocs(SlurmManager())
-@everywhere println("hello from $(myid()):$(gethostname())")
-```
-4. Submit your script to the work queue of your cluster, for example with `sbatch` if the cluster you are on uses Slurm:
-```
-$ sbatch -N 2 --ntasks-per-node=64 hello_world.jl
-```
-This will execute the code on two nodes using 64 workers per node.
-
-We will add similar instructions on running the same "hello world" example using MPI.jl, and additionally running linear algebra and ITensor operations in parallel with both Distributed.jl and MPI.jl.
-
-
-## Option 2: `MPI.jl`
-
-1. Start by [downloading the latest version of Julia](https://julialang.org/downloads/) or loading a pre-installed version of Julia, for example with `module load julia`. 
-2. Load an MPI installation, e.g. `module load openmpi`.
-3. Install `MPI.jl` (e.g. from the command line: `julia --project -e 'using Pkg; Pkg.add("MPI")'`).
-4. Make sure `MPI.jl` is pointing to the correct `MPI` installation by running the following:
-   ```
-   julia --project -e 'ENV["JULIA_MPI_BINARY"]="system"; using Pkg; Pkg.build("MPI"; verbose=true)'
-   ```
-   Make sure the version of MPI in the output of this command matches the one you wanted to load.
-5. Run a test job:
-   ```julia
-   # 01-hello.jl
-   using MPI
-   MPI.Init()
-
-   comm = MPI.COMM_WORLD
-   println("Hello world, I am $(MPI.Comm_rank(comm)) of $(MPI.Comm_size(comm))")
-   MPI.Barrier(comm)
-   ```
-   using `mpirun -np 4 julia 01-hello.jl`
-6. The correct output should look something like:
-    ```julia
-    Hello world, I am 2 of 4
-    Hello world, I am 0 of 4
-    Hello world, I am 3 of 4
-    Hello world, I am 1 of 4
-    ```
-
-If you see the following warning, go back to step 4 and make sure, `MPI.jl` is pointing to the correct MPI installation:
-
-```
-┌ Warning:     You appear to have run julia under a different `mpiexec` than the one used by MPI.jl.
-│     See the documentation for details.
-└ @ MPI ~/.julia/packages/MPI/08SPr/src/environment.jl:38
-```
-
+See the [examples folder](https://github.com/ITensor/ITensorParallel.jl/tree/main/examples) for examples of running DMRG parallelized over sums of Hamiltonians, using Threads.jl, Distributed.jl, and MPI.jl.
