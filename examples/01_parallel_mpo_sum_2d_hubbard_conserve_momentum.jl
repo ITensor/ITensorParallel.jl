@@ -96,7 +96,7 @@ function main(;
     Random.seed!(itensor_rng, seed)
     psi0 = randomMPS(itensor_rng, sites, state; linkdims=10)
   else
-    psi0 = MPS(sites, state; linkdims=10)
+    psi0 = MPS(sites, state)
   end
 
   mpo_sum = Sum(Hs)
