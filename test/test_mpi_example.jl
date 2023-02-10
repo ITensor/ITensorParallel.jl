@@ -16,10 +16,11 @@ using Test
     nprocs = 2
     Nx = 8
     Ny = 4
+    nsweeps = 2
     maxdim = 20
     mpiexec() do exe  # MPI wrapper
       run(
-        `$exe -n $(nprocs) $(Base.julia_cmd()) --threads $(Threads.nthreads()) $(joinpath(examples_dir, example_file)) --Nx $(Nx) --Ny $(Ny) --maxdim $(maxdim) --disk $(disk) --threaded_blocksparse $(threaded_blocksparse)`,
+        `$exe -n $(nprocs) $(Base.julia_cmd()) --threads $(Threads.nthreads()) $(joinpath(examples_dir, example_file)) --Nx $(Nx) --Ny $(Ny) --nsweeps $(nsweeps) --maxdim $(maxdim) --disk $(disk) --threaded_blocksparse $(threaded_blocksparse)`,
       )
     end
   end

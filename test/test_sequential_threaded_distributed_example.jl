@@ -11,6 +11,7 @@ using Test
     include(joinpath(examples_dir, example_file))
     Nx = 8
     Ny = 4
+    nsweeps = 2
     maxdim = 20
     Sums = (SequentialSum, ThreadedSum, DistributedSum)
     @testset "Sum type $Sum, threaded block sparse $threaded_blocksparse, write-to-disk $disk" for Sum in
@@ -21,7 +22,7 @@ using Test
       println(
         "\nRunning parallel test with $(Sum), threaded block sparse $threaded_blocksparse, write-to-disk $disk",
       )
-      main(; Nx, Ny, maxdim, Sum, disk, threaded_blocksparse)
+      main(; Nx, Ny, nsweeps, maxdim, Sum, disk, threaded_blocksparse)
     end
   end
 end

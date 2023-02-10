@@ -12,11 +12,11 @@ ITensors.Strided.disable_threads()
 """
 Run at the command line with 4 processes:
 ```julia
-mpiexecjl -n 2 julia -t2 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 1000
+mpiexecjl -n 2 julia -t2 02_mpi_run.jl --Nx 8 --Ny 4 --nsweeps 10 --maxdim 1000
 
-mpiexecjl -n 2 julia -t2 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 1000 --threaded_blocksparse true
+mpiexecjl -n 2 julia -t2 02_mpi_run.jl --Nx 8 --Ny 4 --nsweeps 10 --maxdim 1000 --threaded_blocksparse true
 
-mpiexecjl -n 2 julia -t2 02_mpi_run.jl --Nx 8 --Ny 4 --maxdim 1000 --disk true --threaded_blocksparse true
+mpiexecjl -n 2 julia -t2 02_mpi_run.jl --Nx 8 --Ny 4 --nsweeps 10 --maxdim 1000 --disk true --threaded_blocksparse true
 ```
 """
 function main(;
@@ -24,6 +24,7 @@ function main(;
   Ny::Int,
   U::Float64=4.0,
   t::Float64=1.0,
+  nsweeps=10,
   maxdim::Int=3000,
   conserve_ky=true,
   seed=1234,
@@ -39,7 +40,6 @@ function main(;
 
   N = Nx * Ny
 
-  nsweeps = 10
   max_maxdim = maxdim
   maxdim = min.([100, 200, 400, 800, 2000, 3000, max_maxdim], max_maxdim)
   cutoff = 1e-6
