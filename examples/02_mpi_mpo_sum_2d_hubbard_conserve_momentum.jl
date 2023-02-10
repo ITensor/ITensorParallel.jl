@@ -32,11 +32,6 @@ function main(;
   random_init=false,
   in_partition=ITensorParallel.default_in_partition,
 )
-  # Helps make results reproducible when comparing
-  # sequential vs. threaded.
-  itensor_rng = Xoshiro()
-  Random.seed!(itensor_rng, seed)
-
   @show Threads.nthreads()
 
   ITensors.enable_threaded_blocksparse(threaded_blocksparse)
@@ -70,7 +65,11 @@ function main(;
   sites = MPI.bcast(sites, 0, MPI.COMM_WORLD)
 
   if random_init
-    # Only available in ITensors 0.3.26
+    # Only available in ITensors 0.3.27
+    # Helps make results reproducible when comparing
+    # sequential vs. threaded.
+    itensor_rng = Xoshiro()
+    Random.seed!(itensor_rng, seed)
     psi0 = randomMPS(itensor_rng, sites, state; linkdims=10)
   else
     psi0 = MPS(sites, state; linkdims=10)
