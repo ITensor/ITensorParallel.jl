@@ -18,7 +18,7 @@ function partition(
   in_partition=(sites, partition, npartitions) ->
     in_partition(sites, partition, npartitions; alg=in_partition_alg),
 )
-  opsums = [OpSum() for _ in 1:nparts]
+  opsums = [OpSum() for _ in 1:npartitions]
   for partition in 1:npartitions
     for term_index in 1:length(opsum)
       term = opsum[term_index]
