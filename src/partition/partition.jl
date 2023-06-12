@@ -3,7 +3,7 @@
 # `OpSum`s, with the goal that the MPO representations
 # will have smaller bond dimensions than the `MPO` representation
 # of the original `OpSum`.
-function partition(os::OpSum, args...; alg, kwargs...)
+function partition(os::OpSum, args...; alg=nothing, kwargs...)
   return partition(Algorithm(alg), os, args...; kwargs...)
 end
 
@@ -13,13 +13,17 @@ default_in_partition_alg() = "sum_split"
 # which partition a term of the OpSum will go into
 # based on the sites.
 function partition(
-  alg::Algorithm, os::OpSum, nparts::Integer; in_partition_alg=default_in_partition_alg()
+  alg::Algorithm,
+  os::OpSum,
+  nparts::Integer;
+  in_partition_alg=default_in_partition_alg(),
+  in_partition=(sites, p, nparts) -> in_partition(sites, p, nparts; in_partition_alg),
 )
   oss = [OpSum() for _ in 1:nparts]
   for p in 1:nparts
     for n in 1:length(os)
       sites = _sites(os[n])
-      if in_partition(sites, p, nparts; in_partition_alg)
+      if in_partition(sites, p, nparts)
         add!(oss[p], os[n])
       end
     end
