@@ -1,3 +1,4 @@
+using Compat
 using ITensorParallel
 using Test
 
@@ -14,7 +15,7 @@ using Test
 
     nx = 16
     ny = 8
-    (; os, os_partition_manual, os_partition_auto) = main(nx, ny)
+    @compat (; os, os_partition_manual, os_partition_auto) = main(nx, ny)
 
     @test length(os) == length(sum(os_partition_manual)) &&
       all(∈(os), sum(os_partition_manual))
