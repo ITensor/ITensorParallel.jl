@@ -77,7 +77,7 @@ function main(;
   psi0 = MPI.bcast(psi0, 0, MPI.COMM_WORLD)
 
   nprocs = MPI.Comm_size(MPI.COMM_WORLD)
-  ℋs = partition(ℋ, nprocs; in_partition)
+  ℋs = partition(ℋ, nprocs; in_partition_alg)
   which_proc = MPI.Comm_rank(MPI.COMM_WORLD) + 1
   mpo_sum_term = MPISumTerm(MPO(ℋs[which_proc], sites), MPI.COMM_WORLD)
 
