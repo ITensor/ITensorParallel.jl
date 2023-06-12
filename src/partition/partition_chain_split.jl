@@ -1,21 +1,21 @@
 # Algorithm for splitting an `OpSum` into chains,
 # suggested by Steve White in discussion with Matt Fishman
 # 06/12/2023.
-function partition(::Algorithm"chain_split", os::OpSum)
+function partition(::Algorithm"chain_split", opsum::OpSum)
   chains = OpSum[]
-  group_terms_into_chains!(chains, os)
+  group_terms_into_chains!(chains, opsum)
   chains = merge_disjoint_chains(chains)
   return chains
 end
 
 # Return a chain group and the original OpSum with that
 # group removed.
-function chain_group_and_complement(os::OpSum)
-  if isempty(os)
-    return OpSum(), os
+function chain_group_and_complement(opsum::OpSum)
+  if isempty(opsum)
+    return OpSum(), opsum
   end
 
-  chain_terms_complement = copy(ITensors.terms(os))
+  chain_terms_complement = copy(ITensors.terms(opsum))
   chain_supports_complement = ITensors.sites.(chain_terms_complement)
   sort!.(unique!.(chain_supports_complement))
   chain_terms = eltype(chain_terms_complement)[]
@@ -51,8 +51,8 @@ function chain_group_and_complement(os::OpSum)
   return Sum(chain_terms), Sum(chain_terms_complement)
 end
 
-function group_terms_into_chains!(chains::Vector{<:OpSum}, os::OpSum)
-  chain, chain_complement = chain_group_and_complement(os)
+function group_terms_into_chains!(chains::Vector{<:OpSum}, opsum::OpSum)
+  chain, chain_complement = chain_group_and_complement(opsum)
   if isempty(chain)
     # TODO: Is this check needed?
     if !isempty(chain_complement)
