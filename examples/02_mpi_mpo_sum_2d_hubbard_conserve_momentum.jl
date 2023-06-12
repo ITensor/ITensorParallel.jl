@@ -31,7 +31,7 @@ function main(;
   threaded_blocksparse=false,
   disk=false,
   random_init=false,
-  in_partition=ITensorParallel.default_in_partition,
+  in_partition_alg="sum_split",
 )
   @show Threads.nthreads()
 

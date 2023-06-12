@@ -7,7 +7,7 @@ using MPI
 using ITensors
 using ITensors.NDTensors
 
-using ITensors: AbstractSum
+using ITensors: AbstractSum, Algorithm, @Algorithm_str
 
 import Base: eltype, length, size
 import ITensors:
@@ -25,7 +25,9 @@ import ITensors:
   set_terms,
   terms
 
-include("partition.jl")
+include(joinpath("partition", "partition.jl"))
+include(joinpath("partition", "partition_sum_split.jl"))
+include(joinpath("partition", "partition_chain_split.jl"))
 include("foldssum.jl")
 include("distributedsum.jl")
 include("mpi_extensions.jl")
