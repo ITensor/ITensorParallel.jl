@@ -50,7 +50,7 @@ function main(;
   threaded_blocksparse=false,
   disk=false,
   random_init=false,
-  in_partition=ITensorParallel.default_in_partition,
+  in_partition_alg="sum_split",
 )
   @show Threads.nthreads()
 
@@ -71,7 +71,7 @@ function main(;
   sites = siteinds("ElecK", N; conserve_qns=true, conserve_ky=conserve_ky, modulus_ky=Ny)
 
   ℋ = hubbard(; Nx=Nx, Ny=Ny, t=t, U=U, ky=true)
-  ℋs = partition(ℋ, npartitions; in_partition)
+  ℋs = partition(ℋ, npartitions; in_partition_alg)
   Hs = [MPO(ℋ, sites) for ℋ in ℋs]
 
   @show maxlinkdim.(Hs)
