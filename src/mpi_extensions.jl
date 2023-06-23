@@ -1,7 +1,7 @@
 gather(obj, comm::MPI.Comm, root::Integer=Cint(0)) = gather(obj, root, comm)
 function gather(obj, root::Integer, comm::MPI.Comm)
   isroot = MPI.Comm_rank(comm) == root
-  count = Ref{Cint}()
+  count = Ref{Clong}()
   buf = MPI.serialize(obj)
   count[] = length(buf)
   counts = MPI.Gather(count[], root, comm)
