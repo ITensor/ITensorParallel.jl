@@ -9,6 +9,7 @@ set_term(sumterm::MPISumTerm, term) = (@set sumterm.term = term)
 set_comm(sumterm::MPISumTerm, comm) = (@set sumterm.comm = comm)
 
 MPISumTerm(mpo::MPO, comm::MPI.Comm) = MPISumTerm(ProjMPO(mpo), comm)
+MPISumTerm(mpos::Vector{MPO},comm::MPI.Comm) = MPISumTerm(ProjMPOSum(mpos),comm)
 
 nsite(sumterm::MPISumTerm) = nsite(term(sumterm))
 
