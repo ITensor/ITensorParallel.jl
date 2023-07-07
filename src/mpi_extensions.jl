@@ -25,6 +25,24 @@ function gather(obj, root::Integer, comm::MPI.Comm)
   return objs
 end
 
+function bcast(obj, root::Integer, comm::Comm)
+    isroot = Comm_rank(comm) == root
+    count = Ref{Clong}()
+    if isroot
+        buf = MPI.serialize(obj)
+        count[] = length(buf)
+    end
+    Bcast!(count, root, comm)
+    if !isroot
+        buf = Array{UInt8}(undef, count[])
+    end
+    Bcast!(buf, root, comm)
+    if !isroot
+        obj = MPI.deserialize(buf)
+    end
+    return obj
+end
+
 function allreduce(sendbuf, op, comm::MPI.Comm)
   ##maybe better to implement as allgather with local reduce, but higher communication cost associated
   bufs = gather(sendbuf, 0, comm)

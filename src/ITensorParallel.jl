@@ -24,7 +24,8 @@ import ITensors:
   rproj,
   set_terms,
   terms
-
+import MPI:
+  bcast
 include(joinpath("partition", "partition.jl"))
 include(joinpath("partition", "partition_sum_split.jl"))
 include(joinpath("partition", "partition_chain_split.jl"))
