@@ -26,21 +26,21 @@ function gather(obj, root::Integer, comm::MPI.Comm)
 end
 
 function bcast(obj, root::Integer, comm::MPI.Comm)
-    isroot = Comm_rank(comm) == root
-    count = Ref{Clong}()
-    if isroot
-        buf = MPI.serialize(obj)
-        count[] = length(buf)
-    end
-    Bcast!(count, root, comm)
-    if !isroot
-        buf = Array{UInt8}(undef, count[])
-    end
-    Bcast!(buf, root, comm)
-    if !isroot
-        obj = MPI.deserialize(buf)
-    end
-    return obj
+  isroot = MPI.Comm_rank(comm) == root
+  count = Ref{Clong}()
+  if isroot
+    buf = MPI.serialize(obj)
+    count[] = length(buf)
+  end
+  MPI.Bcast!(count, root, comm)
+  if !isroot
+    buf = Array{UInt8}(undef, count[])
+  end
+  MPI.Bcast!(buf, root, comm)
+  if !isroot
+    obj = MPI.deserialize(buf)
+  end
+  return obj
 end
 
 function allreduce(sendbuf, op, comm::MPI.Comm)
