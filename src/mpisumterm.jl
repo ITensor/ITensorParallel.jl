@@ -43,10 +43,10 @@ function replacebond!(sumterm::MPISumTerm, M::MPS, b::Int, v::ITensor; kwargs...
     spec = replacebond!(M, b, v; kwargs...)
     M_ortho_lims = ortho_lims(M)
   end
-  M_b1 = MPI.bcast(M[b], 0, comm(sumterm))
-  M_b2 = MPI.bcast(M[b + 1], 0, comm(sumterm))
-  M_ortho_lims = MPI.bcast(M_ortho_lims, 0, comm(sumterm))
-  spec = MPI.bcast(spec, 0, comm(sumterm))
+  M_b1 = bcast(M[b], 0, comm(sumterm))
+  M_b2 = bcast(M[b + 1], 0, comm(sumterm))
+  M_ortho_lims = bcast(M_ortho_lims, 0, comm(sumterm))
+  spec = bcast(spec, 0, comm(sumterm))
   M[b] = M_b1
   M[b + 1] = M_b2
   set_ortho_lims!(M, M_ortho_lims)
@@ -57,7 +57,7 @@ function orthogonalize!(sumterm::MPISumTerm, v::MPS, pos::Int; kwargs...)
   if MPI.Comm_rank(comm(sumterm)) == 0
     v = orthogonalize!(v, pos; kwargs...)
   end
-  return MPI.bcast(v, 0, comm(sumterm))
+  return bcast(v, 0, comm(sumterm))
 end
 
 function position!(sumterm::MPISumTerm, v::MPS, pos::Int)

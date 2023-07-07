@@ -25,7 +25,7 @@ function gather(obj, root::Integer, comm::MPI.Comm)
   return objs
 end
 
-function ITensorParallel.bcast(obj, root::Integer, comm::MPI.Comm)
+function bcast(obj, root::Integer, comm::MPI.Comm)
     isroot = Comm_rank(comm) == root
     count = Ref{Clong}()
     if isroot
@@ -52,5 +52,5 @@ function allreduce(sendbuf, op, comm::MPI.Comm)
   else
     res = nothing
   end
-  return MPI.bcast(res, 0, comm)
+  return bcast(res, 0, comm)
 end
