@@ -25,18 +25,18 @@ function gather(obj, root::Integer, comm::MPI.Comm)
   return objs
 end
 
-function ITensorParallel.bcast(obj, root::Integer, comm::MPI.Comm)
-    isroot = Comm_rank(comm) == root
+function bcast(obj, root::Integer, comm::MPI.Comm)
+    isroot = MPI.Comm_rank(comm) == root
     count = Ref{Clong}()
     if isroot
         buf = MPI.serialize(obj)
         count[] = length(buf)
     end
-    Bcast!(count, root, comm)
+    MPI.Bcast!(count, root, comm)
     if !isroot
         buf = Array{UInt8}(undef, count[])
     end
-    Bcast!(buf, root, comm)
+    MPI.Bcast!(buf, root, comm)
     if !isroot
         obj = MPI.deserialize(buf)
     end

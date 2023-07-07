@@ -1,4 +1,5 @@
 using MPI
+MPI.Init()
 using ITensors
 using ITensorParallel
 using Random
@@ -58,11 +59,11 @@ function main(;
     return iseven(I[1]) ⊻ iseven(I[2]) ? "↓" : "↑"
   end
   display(state)
-
-  MPI.Init()
+  ###MPI.Init() currently needs to be called before using ITensors
+  #MPI.Init()
 
   sites = siteinds("ElecK", N; conserve_qns=true, conserve_ky, modulus_ky=Ny)
-  sites = MPI.bcast(sites, 0, MPI.COMM_WORLD)
+  sites = ITensorParallel.bcast(sites, 0, MPI.COMM_WORLD)
 
   if random_init
     # Only available in ITensors 0.3.27
@@ -74,7 +75,7 @@ function main(;
   else
     psi0 = MPS(sites, state)
   end
-  psi0 = MPI.bcast(psi0, 0, MPI.COMM_WORLD)
+  psi0 = ITensorParallel.bcast(psi0, 0, MPI.COMM_WORLD)
 
   nprocs = MPI.Comm_size(MPI.COMM_WORLD)
   ℋs = partition(ℋ, nprocs; in_partition_alg)
