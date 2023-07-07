@@ -25,7 +25,7 @@ function gather(obj, root::Integer, comm::MPI.Comm)
   return objs
 end
 
-function bcast(obj, root::Integer, comm::Comm)
+function ITensorParallel.bcast(obj, root::Integer, comm::MPI.Comm)
     isroot = Comm_rank(comm) == root
     count = Ref{Clong}()
     if isroot
