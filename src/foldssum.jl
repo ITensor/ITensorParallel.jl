@@ -70,7 +70,7 @@ function product(sum::FoldsSum{<:Any,<:DistributedEx}, v::ITensor)
 end
 
 function product(callback, sum::FoldsSum, v::ITensor)
-  return Folds.sum(terms(sum), executor(sum)) begin term
+  return Folds.sum(terms(sum), executor(sum)) do term
     res = term(v)
     callback()
     return res
@@ -86,7 +86,7 @@ function position!(sum::FoldsSum{<:Any,<:DistributedEx}, v::MPS, pos::Int)
 end
 
 function position!(callback, sum::FoldsSum, v::MPS, pos::Int)
-  new_terms = Folds.map(term -> position!(term, v, pos), terms(sum), executor(sum)) begin term
+  new_terms = Folds.map(terms(sum), executor(sum)) do term
     res = position!(term, v, pos)
     callback()
     return res
@@ -99,7 +99,7 @@ function noiseterm(sum::FoldsSum, v::ITensor, dir::String)
 end
 
 function noiseterm(callback, sum::FoldsSum, v::ITensor, dir::String)
-  return Folds.sum(terms(sum), executor(sum)) begin term
+  return Folds.sum(terms(sum), executor(sum)) do term
     res = noiseterm(term, v, dir)
     callback()
     return res

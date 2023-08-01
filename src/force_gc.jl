@@ -10,7 +10,7 @@ end
 # https://discourse.julialang.org/t/from-multithreading-to-distributed/101984/6
 function force_gc(gb_threshold::Real=get_gc_gb_threshold())
   if Sys.free_memory() < gb_threshold * 2^30
-     GC.gc()
+    GC.gc()
   end
   return nothing
 end
