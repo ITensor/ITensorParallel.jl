@@ -62,16 +62,48 @@ end
 
 ## Necessary operations
 function product(sum::FoldsSum, v::ITensor)
-  return Folds.sum(term -> term(v), terms(sum), executor(sum))
+  return product(Returns(nothing), sum, v)
+end
+
+function product(sum::FoldsSum{<:Any,<:DistributedEx}, v::ITensor)
+  return product(() -> force_gc(), sum, v)
+end
+
+function product(callback, sum::FoldsSum, v::ITensor)
+  return Folds.sum(terms(sum), executor(sum)) begin term
+    res = term(v)
+    callback()
+    return res
+  end
 end
 
 function position!(sum::FoldsSum, v::MPS, pos::Int)
-  new_terms = Folds.map(term -> position!(term, v, pos), terms(sum), executor(sum))
+  return position!(Returns(nothing), sum, v, pos)
+end
+
+function position!(sum::FoldsSum{<:Any,<:DistributedEx}, v::MPS, pos::Int)
+  return position!(() -> force_gc(), sum, v, pos)
+end
+
+function position!(callback, sum::FoldsSum, v::MPS, pos::Int)
+  new_terms = Folds.map(term -> position!(term, v, pos), terms(sum), executor(sum)) begin term
+    res = position!(term, v, pos)
+    callback()
+    return res
+  end
   return set_terms(sum, new_terms)
 end
 
 function noiseterm(sum::FoldsSum, v::ITensor, dir::String)
-  return Folds.sum(term -> noiseterm(term, v, dir), terms(sum), executor(sum))
+  return noiseterm(() -> force_gc(), v, dir)
+end
+
+function noiseterm(callback, sum::FoldsSum, v::ITensor, dir::String)
+  return Folds.sum(terms(sum), executor(sum)) begin term
+    res = noiseterm(term, v, dir)
+    callback()
+    return res
+  end
 end
 
 const ThreadedSum{T} = FoldsSum{T,ThreadedEx}
