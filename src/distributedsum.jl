@@ -37,7 +37,7 @@ function position!(callback, term::Future, v::MPS, pos::Int)
 end
 
 function noiseterm(term::Future, v::ITensor, dir::String)
-  return noiseterm(() -> force_gc(), v, dir)
+  return noiseterm(() -> force_gc(), term, v, dir)
 end
 
 function noiseterm(callback, term::Future, v::ITensor, dir::String)
