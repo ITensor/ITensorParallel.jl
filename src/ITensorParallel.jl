@@ -1,6 +1,7 @@
 module ITensorParallel
 
 using Accessors
+using Compat
 using Distributed
 using Folds
 using MPI
