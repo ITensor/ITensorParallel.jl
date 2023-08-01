@@ -95,7 +95,7 @@ function position!(callback, sum::FoldsSum, v::MPS, pos::Int)
 end
 
 function noiseterm(sum::FoldsSum, v::ITensor, dir::String)
-  return noiseterm(() -> force_gc(), v, dir)
+  return noiseterm(() -> force_gc(), sum, v, dir)
 end
 
 function noiseterm(callback, sum::FoldsSum, v::ITensor, dir::String)
