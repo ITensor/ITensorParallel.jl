@@ -1,6 +1,7 @@
 module ITensorParallel
 
 using Accessors
+using Compat
 using Distributed
 using Folds
 using MPI
@@ -27,6 +28,7 @@ import ITensors:
 include(joinpath("partition", "partition.jl"))
 include(joinpath("partition", "partition_sum_split.jl"))
 include(joinpath("partition", "partition_chain_split.jl"))
+include("force_gc.jl")
 include("foldssum.jl")
 include("distributedsum.jl")
 include("mpi_extensions.jl")
