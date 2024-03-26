@@ -8,10 +8,12 @@ using MPI
 using ITensors
 using ITensors.NDTensors
 
-using ITensors: AbstractSum, Algorithm, @Algorithm_str
+using ITensors: Algorithm, @Algorithm_str
+using ITensors.ITensorMPS: AbstractSum
 
 import Base: eltype, length, size
-import ITensors:
+import ITensors: product
+import ITensors.ITensorMPS:
   disk,
   linkind,
   lproj,
@@ -19,15 +21,14 @@ import ITensors:
   nsite,
   orthogonalize!,
   position!,
-  product,
   replaceind!,
   replacebond!,
   rproj,
   set_terms,
   terms
-include(joinpath("partition", "partition.jl"))
-include(joinpath("partition", "partition_sum_split.jl"))
-include(joinpath("partition", "partition_chain_split.jl"))
+include("partition/partition.jl")
+include("partition/partition_sum_split.jl")
+include("partition/partition_chain_split.jl")
 include("force_gc.jl")
 include("foldssum.jl")
 include("distributedsum.jl")
