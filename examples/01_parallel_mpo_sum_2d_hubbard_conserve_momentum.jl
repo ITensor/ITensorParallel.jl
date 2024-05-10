@@ -4,8 +4,9 @@ rmprocs(setdiff(procs(), 1))
 addprocs(2)
 @show nprocs()
 
-@everywhere using ITensors
+@everywhere using ITensorMPS
 @everywhere using ITensorParallel
+@everywhere using ITensors
 using Random
 
 include(joinpath(pkgdir(ITensors), "examples", "src", "electronk.jl"))

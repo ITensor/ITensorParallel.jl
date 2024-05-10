@@ -2,6 +2,7 @@
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
 Compat = "34da2185-b29b-5c13-b0c7-acf172513d20"
 Distributed = "8ba89e20-285c-5b6f-9357-94700520ee1b"
+ITensorMPS = "0d1a4710-d33b-49a5-8f18-73bdf49b47e2"
 ITensorParallel = "0fccfcd2-f061-4985-9740-339d3f86bfce"
 ITensors = "9136182c-28ba-11e9-034c-db9fb085ebd5"
 MPI = "da04e1cc-30fd-572f-bb4f-1f8673147195"

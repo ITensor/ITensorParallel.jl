@@ -4,16 +4,17 @@ using Accessors
 using Compat
 using Distributed
 using Folds
-using MPI
+using ITensorMPS
 using ITensors
 using ITensors.NDTensors
+using MPI
 
 using ITensors: Algorithm, @Algorithm_str
-using ITensors.ITensorMPS: AbstractSum
+using ITensorMPS: AbstractSum
 
 import Base: eltype, length, size
 import ITensors: product
-import ITensors.ITensorMPS:
+import ITensorMPS:
   disk,
   linkind,
   lproj,

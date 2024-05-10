@@ -1,5 +1,6 @@
-using ITensors
+using ITensorMPS
 using ITensorParallel
+using ITensors
 
 function heisenberg_2d(nx, ny)
   lattice = square_lattice(nx, ny; yperiodic=false)

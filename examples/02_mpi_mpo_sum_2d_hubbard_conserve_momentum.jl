@@ -1,7 +1,8 @@
 using MPI
 MPI.Init()
-using ITensors
+using ITensorMPS
 using ITensorParallel
+using ITensors
 using Random
 
 include(joinpath(pkgdir(ITensors), "examples", "src", "electronk.jl"))
