@@ -13,7 +13,7 @@ using ITensors: Algorithm, @Algorithm_str
 using ITensorMPS: AbstractSum
 
 import Base: eltype, length, size
-import ITensors: product
+import ITensors: product, replaceind!
 import ITensorMPS:
   disk,
   linkind,
@@ -22,7 +22,6 @@ import ITensorMPS:
   nsite,
   orthogonalize!,
   position!,
-  replaceind!,
   replacebond!,
   rproj,
   set_terms,
