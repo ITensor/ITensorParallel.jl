@@ -1,5 +1,5 @@
 using ITensorParallel
-using Test
+using Test: @testset
 
 @testset "Test $(@__FILE__)" begin
   examples_dir = joinpath(pkgdir(ITensorParallel), "examples")

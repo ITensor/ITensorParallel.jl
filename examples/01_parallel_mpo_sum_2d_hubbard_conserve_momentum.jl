@@ -7,14 +7,16 @@ addprocs(2)
 @everywhere using ITensorMPS
 @everywhere using ITensorParallel
 @everywhere using ITensors
-using Random
+using LinearAlgebra: BLAS
+using Random: Random
+using Strided: Strided
 
 electronk_path = joinpath(pkgdir(ITensors), "src", "lib", "ITensorMPS", "examples", "src")
 include(joinpath(electronk_path, "electronk.jl"))
 include(joinpath(electronk_path, "hubbard.jl"))
 
-ITensors.BLAS.set_num_threads(1)
-ITensors.Strided.disable_threads()
+BLAS.set_num_threads(1)
+Strided.disable_threads()
 
 """
 Run with:
