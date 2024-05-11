@@ -5,8 +5,9 @@ using ITensorParallel
 using ITensors
 using Random
 
-include(joinpath(pkgdir(ITensors), "examples", "src", "electronk.jl"))
-include(joinpath(pkgdir(ITensors), "examples", "src", "hubbard.jl"))
+electronk_path = joinpath(pkgdir(ITensors), "src", "lib", "ITensorMPS", "examples", "src")
+include(joinpath(electronk_path, "electronk.jl"))
+include(joinpath(electronk_path, "hubbard.jl"))
 
 ITensors.BLAS.set_num_threads(1)
 ITensors.Strided.disable_threads()
