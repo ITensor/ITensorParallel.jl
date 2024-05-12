@@ -1,14 +1,18 @@
-using MPI
+using MPI: MPI
 MPI.Init()
-using ITensors
+using ITensorMPS
 using ITensorParallel
-using Random
+using ITensors
+using LinearAlgebra: BLAS
+using Random: Random
+using Strided: Strided
 
-include(joinpath(pkgdir(ITensors), "examples", "src", "electronk.jl"))
-include(joinpath(pkgdir(ITensors), "examples", "src", "hubbard.jl"))
+electronk_path = joinpath(pkgdir(ITensors), "src", "lib", "ITensorMPS", "examples", "src")
+include(joinpath(electronk_path, "electronk.jl"))
+include(joinpath(electronk_path, "hubbard.jl"))
 
-ITensors.BLAS.set_num_threads(1)
-ITensors.Strided.disable_threads()
+BLAS.set_num_threads(1)
+Strided.disable_threads()
 
 """
 Run at the command line with 4 processes:
@@ -84,7 +88,7 @@ function main(;
 
   if disk
     # Write-to-disk
-    mpo_sum_term = ITensors.disk(mpo_sum_term)
+    mpo_sum_term = ITensorMPS.disk(mpo_sum_term)
   end
 
   energy, psi = @time dmrg(mpo_sum_term, psi0; nsweeps, maxdim, cutoff, noise)

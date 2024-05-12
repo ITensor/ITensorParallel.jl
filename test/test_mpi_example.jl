@@ -1,6 +1,6 @@
-using MPI
+using MPI: MPI, mpiexec
 using ITensorParallel
-using Test
+using Test: @testset
 
 @testset "Test $(@__FILE__)" begin
   examples_dir = joinpath(pkgdir(ITensorParallel), "examples")
@@ -18,10 +18,8 @@ using Test
     Ny = 4
     nsweeps = 2
     maxdim = 20
-    mpiexec() do exe  # MPI wrapper
-      run(
-        `$exe -n $(nprocs) $(Base.julia_cmd()) --threads $(Threads.nthreads()) $(joinpath(examples_dir, example_file)) --Nx $(Nx) --Ny $(Ny) --nsweeps $(nsweeps) --maxdim $(maxdim) --disk $(disk) --threaded_blocksparse $(threaded_blocksparse)`,
-      )
-    end
+    run(
+      `$(mpiexec()) -n $(nprocs) $(Base.julia_cmd()) --threads $(Threads.nthreads()) $(joinpath(examples_dir, example_file)) --Nx $(Nx) --Ny $(Ny) --nsweeps $(nsweeps) --maxdim $(maxdim) --disk $(disk) --threaded_blocksparse $(threaded_blocksparse)`,
+    )
   end
 end
