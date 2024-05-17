@@ -25,7 +25,7 @@ using Test
     @test length(os_partition_manual) == length(os_partition_auto)
 
     s = siteinds("S=1/2", nx * ny)
-    ψ = randomMPS(s, j -> isodd(j) ? "↑" : "↓"; linkdims=10)
+    ψ = random_mps(s, j -> isodd(j) ? "↑" : "↓"; linkdims=10)
 
     H = MPO(os, s)
     @test maxlinkdim(H) == 3 * (ny + 1) - 1
