@@ -1,3 +1,7 @@
+| :warning: WARNING          |
+|:---------------------------|
+| This package is a work in progress! It mainly exists as an internal experiment by the ITensor developers to test out some parallelization strategies in MPS algorithms like DMRG, and for now it is focused on multithreaded and distributed parallelization over sums of MPOs. Your mileage may vary in terms of seeing speedups for your calculations. |
+
 # ITensorParallel
 
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://mtfishman.github.io/ITensorParallel.jl/stable)
