@@ -11,7 +11,7 @@ using LinearAlgebra: BLAS
 using Random: Random
 using Strided: Strided
 
-electronk_path = joinpath(pkgdir(ITensors), "src", "lib", "ITensorMPS", "examples", "src")
+electronk_path = joinpath(pkgdir(ITensorMPS), "examples", "src")
 include(joinpath(electronk_path, "electronk.jl"))
 include(joinpath(electronk_path, "hubbard.jl"))
 
