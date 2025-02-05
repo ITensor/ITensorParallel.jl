@@ -17,7 +17,7 @@ Accessors = "0.1.26"
 Compat = "4.8"
 Folds = "0.2.8"
 ITensorMPS = "0.3"
-ITensors = "0.7"
+ITensors = "0.7, 0.8"
 MPI = "0.20"
 julia = "1.10"
 
