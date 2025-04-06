@@ -11,6 +11,7 @@ using Test
 
   @testset "Hamiltonian partitioning example $example_file" for example_file in
                                                                 example_files
+
     include(joinpath(examples_dir, example_file))
 
     nx = 16
